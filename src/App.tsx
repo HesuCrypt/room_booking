@@ -1,8 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { NavLink, Navigate, Route, Routes, useParams } from 'react-router-dom';
 
-const ROOMS = ['Meeting Room A - conference room', 'Meeting Room B - The one beside the room with bean bags', 'Meeting Room C - with bean bags', 'Pod 1 - Near recep', 'Pod 2 - Near the door'];
+type RoomConfig = {
+  slug: string;
+  id: string;
+};
+
+const ROOMS: RoomConfig[] = [
+  { slug: 'meeting-room-a', id: 'Meeting Room A - conference room' },
+  { slug: 'meeting-room-b', id: 'Meeting Room B - The one beside the room with bean bags' },
+  { slug: 'meeting-room-c', id: 'Meeting Room C - with bean bags' },
+  { slug: 'pod-1', id: 'Pod 1 - Near recep' },
+  { slug: 'pod-2', id: 'Pod 2 - Near the door' }
+];
+const DEFAULT_ROOM_SLUG = ROOMS[0].slug;
+const ROOM_BY_SLUG = ROOMS.reduce<Record<string, RoomConfig>>((acc, room) => {
+  acc[room.slug] = room;
+  return acc;
+}, {});
 const TIMES = [
   '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
   '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM',
@@ -39,8 +56,20 @@ const formatDate = (d: Date) => {
 const formatDisplayDate = (d: Date) => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
 export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to={`/room/${DEFAULT_ROOM_SLUG}`} replace />} />
+      <Route path="/room/:roomSlug" element={<RoomBookingPage />} />
+      <Route path="*" element={<Navigate to={`/room/${DEFAULT_ROOM_SLUG}`} replace />} />
+    </Routes>
+  );
+}
+
+function RoomBookingPage() {
+  const { roomSlug } = useParams<{ roomSlug: string }>();
+  const selectedRoomConfig = roomSlug ? ROOM_BY_SLUG[roomSlug] : undefined;
+  const selectedRoom = selectedRoomConfig?.id || '';
   const [allBookings, setAllBookings] = useState<Booking[]>([]);
-  const [selectedRoom, setSelectedRoom] = useState<string>(ROOMS[0]);
   const [isRoomDropdownOpen, setIsRoomDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ date: string, time: string, displayDate: string } | null>(null);
@@ -55,6 +84,8 @@ export default function App() {
   const [dbError, setDbError] = useState<{ message: string, code?: string } | null>(null);
 
   useEffect(() => {
+    if (!selectedRoomConfig) return;
+
     const fetchBookings = async () => {
       setIsLoading(true);
       const startStr = formatDate(currentWeekStart);
@@ -63,7 +94,7 @@ export default function App() {
       const endStr = formatDate(endOfWeek);
 
       try {
-        const response = await fetch(`/api/bookings?startDate=${startStr}&endDate=${endStr}`);
+        const response = await fetch(`/api/bookings?roomId=${encodeURIComponent(selectedRoom)}&startDate=${startStr}&endDate=${endStr}`);
         if (!response.ok) {
           const errData = await response.json();
           throw { message: errData.error || 'Failed to fetch bookings', code: errData.code };
@@ -90,12 +121,12 @@ export default function App() {
     };
 
     fetchBookings();
-  }, [selectedRoom, currentWeekStart]);
+  }, [selectedRoom, selectedRoomConfig, currentWeekStart]);
 
   const bookings = allBookings.filter(b => b.roomId === selectedRoom);
 
   const getRoomAvailability = (room: string) => {
-    const roomBookings = allBookings.filter(b => b.roomId === room);
+    const roomBookings = room === selectedRoom ? bookings : [];
     const totalSlotsPerWeek = 5 * TIMES.length;
     return totalSlotsPerWeek - roomBookings.length;
   };
@@ -264,6 +295,10 @@ export default function App() {
     }
   };
 
+  if (!selectedRoomConfig) {
+    return <Navigate to={`/room/${DEFAULT_ROOM_SLUG}`} replace />;
+  }
+
   if (dbError?.code === 'MISSING_SECRET' || dbError?.code === 'INVALID_SECRET') {
     return (
       <div className="min-h-screen bg-white text-black font-sans flex flex-col items-center justify-center p-6">
@@ -358,21 +393,22 @@ export default function App() {
                     className="absolute top-full left-0 right-0 z-20 bg-white border border-t-0 border-black shadow-lg"
                   >
                     {ROOMS.map(room => {
-                      const avail = getRoomAvailability(room);
+                      const avail = getRoomAvailability(room.id);
                       return (
-                        <button
-                          key={room}
-                          onClick={() => { setSelectedRoom(room); setIsRoomDropdownOpen(false); }}
-                          className={`w-full text-left px-4 py-3 border-b border-black last:border-b-0 font-medium flex justify-between items-start gap-3 ${selectedRoom === room ? 'bg-gray-100' : 'hover:bg-gray-50'
+                        <NavLink
+                          key={room.slug}
+                          to={`/room/${room.slug}`}
+                          onClick={() => setIsRoomDropdownOpen(false)}
+                          className={({ isActive }) => `w-full text-left px-4 py-3 border-b border-black last:border-b-0 font-medium flex justify-between items-start gap-3 ${isActive ? 'bg-gray-100' : 'hover:bg-gray-50'
                             }`}
                         >
-                          <span className="text-sm uppercase tracking-widest min-w-0 break-words leading-snug">{room}</span>
+                          <span className="text-sm uppercase tracking-widest min-w-0 break-words leading-snug">{room.id}</span>
                           {avail > 0 ? (
                             <span className="text-[10px] bg-green-100 text-green-800 px-2 py-1 font-bold uppercase tracking-widest">Available</span>
                           ) : (
                             <span className="text-[10px] bg-red-100 text-red-800 px-2 py-1 font-bold uppercase tracking-widest">Full</span>
                           )}
-                        </button>
+                        </NavLink>
                       );
                     })}
                   </motion.div>
@@ -384,21 +420,21 @@ export default function App() {
           {/* Desktop Buttons */}
           <div className="hidden md:flex md:flex-col">
             {ROOMS.map(room => {
-              const avail = getRoomAvailability(room);
+              const avail = getRoomAvailability(room.id);
               return (
-                <button
-                  key={room}
-                  onClick={() => setSelectedRoom(room)}
-                  className={`px-4 py-3 border-b border-black text-left font-medium transition-colors min-h-[44px] flex justify-between items-start gap-3 ${selectedRoom === room ? 'bg-black text-white' : 'bg-white text-black hover:bg-black hover:text-white'
+                <NavLink
+                  key={room.slug}
+                  to={`/room/${room.slug}`}
+                  className={({ isActive }) => `px-4 py-3 border-b border-black text-left font-medium transition-colors min-h-[44px] flex justify-between items-start gap-3 ${isActive ? 'bg-black text-white' : 'bg-white text-black hover:bg-black hover:text-white'
                     }`}
                 >
-                  <span className="min-w-0 break-words leading-snug">{room}</span>
+                  <span className="min-w-0 break-words leading-snug">{room.id}</span>
                   {avail > 0 ? (
-                    <span className={`w-2 h-2 rounded-full mt-1 shrink-0 ${selectedRoom === room ? 'bg-green-400' : 'bg-green-500'}`}></span>
+                    <span className={`w-2 h-2 rounded-full mt-1 shrink-0 ${selectedRoom === room.id ? 'bg-green-400' : 'bg-green-500'}`}></span>
                   ) : (
-                    <span className={`w-2 h-2 rounded-full mt-1 shrink-0 ${selectedRoom === room ? 'bg-red-400' : 'bg-red-500'}`}></span>
+                    <span className={`w-2 h-2 rounded-full mt-1 shrink-0 ${selectedRoom === room.id ? 'bg-red-400' : 'bg-red-500'}`}></span>
                   )}
-                </button>
+                </NavLink>
               );
             })}
           </div>
