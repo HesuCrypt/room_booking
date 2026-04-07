@@ -363,10 +363,10 @@ export default function App() {
                         <button
                           key={room}
                           onClick={() => { setSelectedRoom(room); setIsRoomDropdownOpen(false); }}
-                          className={`w-full text-left px-4 py-3 border-b border-black last:border-b-0 font-medium flex justify-between items-center ${selectedRoom === room ? 'bg-gray-100' : 'hover:bg-gray-50'
+                          className={`w-full text-left px-4 py-3 border-b border-black last:border-b-0 font-medium flex justify-between items-start gap-3 ${selectedRoom === room ? 'bg-gray-100' : 'hover:bg-gray-50'
                             }`}
                         >
-                          <span className="text-sm uppercase tracking-widest">{room}</span>
+                          <span className="text-sm uppercase tracking-widest min-w-0 break-words leading-snug">{room}</span>
                           {avail > 0 ? (
                             <span className="text-[10px] bg-green-100 text-green-800 px-2 py-1 font-bold uppercase tracking-widest">Available</span>
                           ) : (
@@ -389,14 +389,14 @@ export default function App() {
                 <button
                   key={room}
                   onClick={() => setSelectedRoom(room)}
-                  className={`whitespace-nowrap px-4 py-3 border-b border-black text-left font-medium transition-colors min-h-[44px] flex justify-between items-center ${selectedRoom === room ? 'bg-black text-white' : 'bg-white text-black hover:bg-black hover:text-white'
+                  className={`px-4 py-3 border-b border-black text-left font-medium transition-colors min-h-[44px] flex justify-between items-start gap-3 ${selectedRoom === room ? 'bg-black text-white' : 'bg-white text-black hover:bg-black hover:text-white'
                     }`}
                 >
-                  <span>{room}</span>
+                  <span className="min-w-0 break-words leading-snug">{room}</span>
                   {avail > 0 ? (
-                    <span className={`w-2 h-2 rounded-full ${selectedRoom === room ? 'bg-green-400' : 'bg-green-500'}`}></span>
+                    <span className={`w-2 h-2 rounded-full mt-1 shrink-0 ${selectedRoom === room ? 'bg-green-400' : 'bg-green-500'}`}></span>
                   ) : (
-                    <span className={`w-2 h-2 rounded-full ${selectedRoom === room ? 'bg-red-400' : 'bg-red-500'}`}></span>
+                    <span className={`w-2 h-2 rounded-full mt-1 shrink-0 ${selectedRoom === room ? 'bg-red-400' : 'bg-red-500'}`}></span>
                   )}
                 </button>
               );
