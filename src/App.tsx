@@ -54,6 +54,12 @@ const formatDate = (d: Date) => {
 };
 
 const formatDisplayDate = (d: Date) => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+const formatTimeToSlot = (d: Date) => {
+  const hour = d.getHours();
+  const hour12 = hour % 12 || 12;
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  return `${String(hour12).padStart(2, '0')}:00 ${ampm}`;
+};
 
 export default function App() {
   return (
@@ -82,6 +88,12 @@ function RoomBookingPage() {
   const [currentWeekStart, setCurrentWeekStart] = useState(getStartOfWeek(new Date()));
   const [isLoading, setIsLoading] = useState(false);
   const [dbError, setDbError] = useState<{ message: string, code?: string } | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!selectedRoomConfig) return;
@@ -124,6 +136,11 @@ function RoomBookingPage() {
   }, [selectedRoom, selectedRoomConfig, currentWeekStart]);
 
   const bookings = allBookings.filter(b => b.roomId === selectedRoom);
+  const currentDateStr = formatDate(currentTime);
+  const currentTimeSlot = formatTimeToSlot(currentTime);
+  const currentMeeting = bookings.find(
+    (b) => b.date === currentDateStr && b.time === currentTimeSlot
+  );
 
   const getRoomAvailability = (room: string) => {
     const roomBookings = room === selectedRoom ? bookings : [];
@@ -359,7 +376,7 @@ function RoomBookingPage() {
 
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
         {/* Sidebar / Room Selector */}
-        <aside className="md:w-64 border-b md:border-b-0 md:border-r border-black flex-shrink-0 md:overflow-y-auto bg-white">
+        <aside className="md:w-64 border-b md:border-b-0 md:border-r border-black flex-shrink-0 md:overflow-y-auto bg-white md:flex md:flex-col">
           <div className="p-4 border-b border-black hidden md:block">
             <h2 className="font-bold uppercase tracking-widest text-sm">Select Room</h2>
           </div>
@@ -436,6 +453,33 @@ function RoomBookingPage() {
                 </NavLink>
               );
             })}
+          </div>
+
+          <div className="hidden md:block border-t border-black">
+            <div className="p-4 border-b border-black bg-black text-white">
+              <h3 className="font-bold uppercase tracking-widest text-xs">Current Meeting</h3>
+              <p className="text-[10px] opacity-80 mt-1">{formatDisplayDate(currentTime)} {currentTimeSlot}</p>
+            </div>
+            <div className="p-4 space-y-3 min-h-[180px]">
+              {currentMeeting ? (
+                <>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest opacity-70">Room</p>
+                    <p className="font-bold text-sm leading-snug">{currentMeeting.roomId}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest opacity-70">Booked By</p>
+                    <p className="font-bold text-sm">{currentMeeting.userName}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest opacity-70">Details</p>
+                    <p className="text-sm leading-snug break-words">{currentMeeting.purpose}</p>
+                  </div>
+                </>
+              ) : (
+                <div className="text-xs uppercase tracking-widest opacity-70">No meeting happening now</div>
+              )}
+            </div>
           </div>
         </aside>
 
