@@ -26,7 +26,6 @@ const TIMES = [
   '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM',
   '06:00 PM', '07:00 PM'
 ];
-const ALL_TIMES = [...TIMES, '08:00 PM'];
 
 type Booking = {
   id: string;
@@ -150,8 +149,7 @@ function RoomBookingPage() {
 
   const openBookingModal = (date: string, time: string, displayDate: string) => {
     setSelectedSlot({ date, time, displayDate });
-    const startIndex = TIMES.indexOf(time);
-    setEndTime(ALL_TIMES[startIndex + 1]);
+    setEndTime(time);
     setRecurrence('none');
     setRecurrenceEnd('');
     setUserName('');
@@ -168,10 +166,10 @@ function RoomBookingPage() {
   const getPreviewSlots = () => {
     if (!selectedSlot || !endTime) return [];
     const startIndex = TIMES.indexOf(selectedSlot.time);
-    const endIndex = ALL_TIMES.indexOf(endTime);
-    if (startIndex >= endIndex) return [];
+    const endIndex = TIMES.indexOf(endTime);
+    if (startIndex < 0 || endIndex < 0 || startIndex > endIndex) return [];
 
-    const dailyTimes = TIMES.slice(startIndex, endIndex);
+    const dailyTimes = TIMES.slice(startIndex, endIndex + 1);
     const slots: { date: string, time: string }[] = [];
 
     // Ensure we parse the dates in local time to avoid timezone shifts
@@ -629,7 +627,7 @@ function RoomBookingPage() {
                       onChange={e => { setEndTime(e.target.value); setError(null); }}
                       className="border border-black p-1 outline-none focus:ring-1 focus:ring-black bg-white text-black font-bold"
                     >
-                      {selectedSlot && ALL_TIMES.slice(TIMES.indexOf(selectedSlot.time) + 1).map(t => (
+                      {selectedSlot && TIMES.slice(TIMES.indexOf(selectedSlot.time)).map(t => (
                         <option key={t} value={t}>{t}</option>
                       ))}
                     </select>
