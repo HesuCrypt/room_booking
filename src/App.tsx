@@ -13,7 +13,8 @@ const ROOMS: RoomConfig[] = [
   { slug: 'meeting-room-b', id: 'Meeting Room B - The one beside the room with bean bags' },
   { slug: 'meeting-room-c', id: 'Meeting Room C - with bean bags' },
   { slug: 'pod-1', id: 'Pod 1 - Near recep' },
-  { slug: 'pod-2', id: 'Pod 2 - Near the door' }
+  { slug: 'pod-2', id: 'Pod 2 - Near the door' },
+  { slug: 'av-training-room', id: 'AV training room' }
 ];
 const DEFAULT_ROOM_SLUG = ROOMS[0].slug;
 const ROOM_BY_SLUG = ROOMS.reduce<Record<string, RoomConfig>>((acc, room) => {
