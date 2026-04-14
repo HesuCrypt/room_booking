@@ -3,6 +3,7 @@ import pkg from 'pg';
 const { Pool } = pkg;
 import dotenv from 'dotenv';
 import path from 'path';
+import crypto from 'crypto';
 
 dotenv.config();
 
@@ -47,8 +48,13 @@ async function ensureDB() {
         time TEXT NOT NULL,
         user_name TEXT NOT NULL,
         purpose TEXT NOT NULL,
+        cancel_pin_hash TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+    `);
+    await db.query(`
+      ALTER TABLE bookings
+      ADD COLUMN IF NOT EXISTS cancel_pin_hash TEXT;
     `);
     isInitialized = true;
   } catch (e: any) {
@@ -108,6 +114,14 @@ app.post('/api/bookings', async (req, res) => {
       res.json([]);
       return;
     }
+    const cancelPin = String(bookings[0]?.cancel_pin || '');
+    if (!/^\d{4,6}$/.test(cancelPin)) {
+      return res.status(400).json({
+        error: 'A 4-6 digit cancel PIN is required.',
+        code: 'INVALID_CANCEL_PIN'
+      });
+    }
+    const cancelPinHash = crypto.createHash('sha256').update(cancelPin).digest('hex');
 
     const roomId = bookings[0].room_id;
     const minDate = bookings.reduce((min: string, b: any) => b.date < min ? b.date : min, bookings[0].date);
@@ -136,13 +150,13 @@ app.post('/api/bookings', async (req, res) => {
 
     const values: any[] = [];
     const placeholders = bookings.map((b: any, i: number) => {
-      const offset = i * 6;
-      values.push(b.group_id, b.room_id, b.date, b.time, b.user_name, b.purpose);
-      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6})`;
+      const offset = i * 7;
+      values.push(b.group_id, b.room_id, b.date, b.time, b.user_name, b.purpose, cancelPinHash);
+      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7})`;
     }).join(', ');
 
     const result = await db.query(`
-      INSERT INTO bookings (group_id, room_id, date, time, user_name, purpose)
+      INSERT INTO bookings (group_id, room_id, date, time, user_name, purpose, cancel_pin_hash)
       VALUES ${placeholders}
       RETURNING *;
     `, values);
@@ -160,7 +174,38 @@ app.delete('/api/bookings/:groupId', async (req, res) => {
   try {
     await ensureDB();
     const { groupId } = req.params;
+    const cancelPin = String(req.body?.cancelPin || '');
     const db = getPool();
+    if (!/^\d{4,6}$/.test(cancelPin)) {
+      return res.status(400).json({
+        error: 'Cancel PIN must be 4-6 digits.',
+        code: 'INVALID_CANCEL_PIN'
+      });
+    }
+    const pinHash = crypto.createHash('sha256').update(cancelPin).digest('hex');
+    const existing = await db.query(
+      'SELECT cancel_pin_hash FROM bookings WHERE group_id = $1 LIMIT 1',
+      [groupId]
+    );
+    if (existing.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Booking not found.',
+        code: 'NOT_FOUND'
+      });
+    }
+    const storedHash = existing.rows[0].cancel_pin_hash;
+    if (!storedHash) {
+      return res.status(403).json({
+        error: 'This booking cannot be canceled without admin help.',
+        code: 'PIN_NOT_SET'
+      });
+    }
+    if (storedHash !== pinHash) {
+      return res.status(403).json({
+        error: 'Incorrect cancel PIN.',
+        code: 'INVALID_CANCEL_PIN'
+      });
+    }
     await db.query('DELETE FROM bookings WHERE group_id = $1', [groupId]);
     res.json({ success: true });
   } catch (e: any) {

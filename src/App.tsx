@@ -81,6 +81,7 @@ function RoomBookingPage() {
   const [selectedSlot, setSelectedSlot] = useState<{ date: string, time: string, displayDate: string } | null>(null);
   const [userName, setUserName] = useState('');
   const [purpose, setPurpose] = useState('');
+  const [cancelPin, setCancelPin] = useState('');
   const [endTime, setEndTime] = useState('');
   const [recurrence, setRecurrence] = useState<'none' | 'daily' | 'weekly'>('none');
   const [recurrenceEnd, setRecurrenceEnd] = useState<string>('');
@@ -171,6 +172,7 @@ function RoomBookingPage() {
     setRecurrenceEnd('');
     setUserName('');
     setPurpose('');
+    setCancelPin('');
     setError(null);
     setIsModalOpen(true);
   };
@@ -229,6 +231,10 @@ function RoomBookingPage() {
   const handleBook = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedSlot || !userName.trim() || !purpose.trim() || !endTime) return;
+    if (!/^\d{4,6}$/.test(cancelPin)) {
+      setError('Cancel PIN must be 4-6 digits.');
+      return;
+    }
 
     const slotsToBook = getPreviewSlots();
     if (slotsToBook.length === 0) {
@@ -253,6 +259,7 @@ function RoomBookingPage() {
       time: slot.time,
       user_name: userName.trim(),
       purpose: purpose.trim(),
+      cancel_pin: cancelPin,
     }));
 
     try {
@@ -290,10 +297,18 @@ function RoomBookingPage() {
   const handleDelete = async (id: string) => {
     const bookingToDelete = bookings.find(b => b.id === id);
     if (bookingToDelete) {
+      const enteredPin = window.prompt('Enter cancel PIN (4-6 digits):', '');
+      if (enteredPin === null) return;
+      if (!/^\d{4,6}$/.test(enteredPin.trim())) {
+        alert('Cancel PIN must be 4-6 digits.');
+        return;
+      }
       setIsLoading(true);
       try {
         const response = await fetch(`/api/bookings/${bookingToDelete.groupId}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cancelPin: enteredPin.trim() })
         });
 
         if (!response.ok) {
@@ -755,6 +770,21 @@ function RoomBookingPage() {
                     onChange={e => setPurpose(e.target.value)}
                     className="w-full border border-black p-3 outline-none focus:ring-1 focus:ring-black min-h-[44px] bg-white text-black"
                     placeholder="MEETING PURPOSE"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold uppercase mb-2">Cancel PIN (4-6 digits)</label>
+                  <input
+                    required
+                    type="password"
+                    inputMode="numeric"
+                    pattern="\d{4,6}"
+                    minLength={4}
+                    maxLength={6}
+                    value={cancelPin}
+                    onChange={e => setCancelPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="w-full border border-black p-3 outline-none focus:ring-1 focus:ring-black min-h-[44px] bg-white text-black"
+                    placeholder="ENTER PIN"
                   />
                 </div>
                 <button
