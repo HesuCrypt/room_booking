@@ -90,6 +90,11 @@ function RoomBookingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [dbError, setDbError] = useState<{ message: string, code?: string } | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  // Delete modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletePin, setDeletePin] = useState('');
+  const [deletePinError, setDeletePinError] = useState<string | null>(null);
+  const [pendingDeleteBooking, setPendingDeleteBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -294,35 +299,56 @@ function RoomBookingPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     const bookingToDelete = bookings.find(b => b.id === id);
     if (bookingToDelete) {
-      const enteredPin = window.prompt('Enter cancel PIN (4-6 digits):', '');
-      if (enteredPin === null) return;
-      if (!/^\d{4,6}$/.test(enteredPin.trim())) {
-        alert('Cancel PIN must be 4-6 digits.');
-        return;
-      }
-      setIsLoading(true);
-      try {
-        const response = await fetch(`/api/bookings/${bookingToDelete.groupId}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cancelPin: enteredPin.trim() })
-        });
+      setPendingDeleteBooking(bookingToDelete);
+      setDeletePin('');
+      setDeletePinError(null);
+      setIsDeleteModalOpen(true);
+    }
+  };
 
-        if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.error || 'Failed to delete');
-        }
+  const ADMIN_PASSWORD = '2004';
 
-        setAllBookings(allBookings.filter(b => b.groupId !== bookingToDelete.groupId));
-      } catch (err: any) {
-        console.error("Error deleting bookings:", err);
-        alert("Failed to delete: " + err.message);
-      } finally {
-        setIsLoading(false);
+  const confirmDelete = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingDeleteBooking) return;
+
+    const isAdmin = deletePin === ADMIN_PASSWORD;
+    if (!isAdmin && !/^\d{4,6}$/.test(deletePin)) {
+      setDeletePinError('Enter your 4–6 digit cancel PIN or the admin passcode.');
+      return;
+    }
+
+    setDeletePinError(null);
+    setIsLoading(true);
+
+    const body = isAdmin
+      ? { adminPassword: deletePin }
+      : { cancelPin: deletePin };
+
+    try {
+      const response = await fetch(`/api/bookings/${pendingDeleteBooking.groupId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Failed to delete');
       }
+
+      setAllBookings(allBookings.filter(b => b.groupId !== pendingDeleteBooking.groupId));
+      setIsDeleteModalOpen(false);
+      setPendingDeleteBooking(null);
+      setDeletePin('');
+    } catch (err: any) {
+      console.error('Error deleting booking:', err);
+      setDeletePinError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -794,6 +820,100 @@ function RoomBookingPage() {
                 >
                   {isLoading ? 'Booking...' : 'Confirm Booking'}
                 </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete / Cancel Booking Modal */}
+      <AnimatePresence>
+        {isDeleteModalOpen && pendingDeleteBooking && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white border-2 border-black w-full max-w-sm p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+            >
+              {/* Header */}
+              <div className="flex justify-between items-center mb-5 border-b border-black pb-4">
+                <h3 className="text-lg font-bold uppercase tracking-tighter">Cancel Booking</h3>
+                <button
+                  onClick={() => { setIsDeleteModalOpen(false); setPendingDeleteBooking(null); }}
+                  className="p-1.5 bg-white text-black hover:bg-black hover:text-white border border-black transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Booking Info */}
+              <div className="mb-5 space-y-1.5 font-mono text-xs border border-black p-3 bg-gray-50">
+                <div className="flex justify-between">
+                  <span className="uppercase opacity-60">Booked by</span>
+                  <span className="font-bold">{pendingDeleteBooking.userName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="uppercase opacity-60">Purpose</span>
+                  <span className="font-bold truncate max-w-[160px]">{pendingDeleteBooking.purpose}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="uppercase opacity-60">Date</span>
+                  <span className="font-bold">{pendingDeleteBooking.date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="uppercase opacity-60">Time</span>
+                  <span className="font-bold">{pendingDeleteBooking.time}</span>
+                </div>
+              </div>
+
+              {/* PIN Form */}
+              <form onSubmit={confirmDelete} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest mb-2">
+                    Cancel PIN / Admin Passcode
+                  </label>
+                  <input
+                    autoFocus
+                    type="password"
+                    inputMode="numeric"
+                    value={deletePin}
+                    onChange={e => { setDeletePin(e.target.value); setDeletePinError(null); }}
+                    className="w-full border border-black p-3 outline-none focus:ring-2 focus:ring-black min-h-[44px] bg-white text-black font-mono tracking-widest"
+                    placeholder="ENTER PIN"
+                  />
+                  <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wide">
+                    Enter your booking cancel PIN, or use the admin passcode.
+                  </p>
+                </div>
+
+                {deletePinError && (
+                  <div className="border-2 border-black p-3 text-xs font-bold uppercase tracking-widest bg-white text-black">
+                    {deletePinError}
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => { setIsDeleteModalOpen(false); setPendingDeleteBooking(null); }}
+                    className="flex-1 border-2 border-black bg-white text-black font-bold uppercase tracking-widest p-3 hover:bg-gray-100 transition-colors min-h-[44px]"
+                  >
+                    Keep
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isLoading || !deletePin}
+                    className="flex-1 bg-black text-white font-bold uppercase tracking-widest p-3 hover:bg-red-600 border-2 border-black transition-colors min-h-[44px] disabled:opacity-50"
+                  >
+                    {isLoading ? 'Deleting…' : 'Delete'}
+                  </button>
+                </div>
               </form>
             </motion.div>
           </motion.div>

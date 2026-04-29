@@ -175,7 +175,26 @@ app.delete('/api/bookings/:groupId', async (req, res) => {
     await ensureDB();
     const { groupId } = req.params;
     const cancelPin = String(req.body?.cancelPin || '');
+    const adminPassword = String(req.body?.adminPassword || '');
     const db = getPool();
+
+    // Admin override: if the admin system password is provided and correct, skip PIN check
+    const ADMIN_PASSWORD = '2004';
+    if (adminPassword === ADMIN_PASSWORD) {
+      const adminCheck = await db.query(
+        'SELECT id FROM bookings WHERE group_id = $1 LIMIT 1',
+        [groupId]
+      );
+      if (adminCheck.rows.length === 0) {
+        return res.status(404).json({
+          error: 'Booking not found.',
+          code: 'NOT_FOUND'
+        });
+      }
+      await db.query('DELETE FROM bookings WHERE group_id = $1', [groupId]);
+      return res.json({ success: true });
+    }
+
     if (!/^\d{4,6}$/.test(cancelPin)) {
       return res.status(400).json({
         error: 'Cancel PIN must be 4-6 digits.',
