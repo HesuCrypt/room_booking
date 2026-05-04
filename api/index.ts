@@ -60,6 +60,10 @@ async function ensureDB() {
       ALTER TABLE bookings
       ADD COLUMN IF NOT EXISTS is_executive BOOLEAN DEFAULT FALSE;
     `);
+    await db.query(`
+      ALTER TABLE bookings
+      ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'default';
+    `);
     isInitialized = true;
   } catch (e: any) {
     console.error("Database connection/init failed:", e.message);
@@ -152,15 +156,22 @@ app.post('/api/bookings', async (req, res) => {
       });
     }
 
+    let theme = 'default';
+    if (cancelPin === '0419') {
+      theme = 'light-blue';
+    } else if (cancelPin === '2008') {
+      theme = 'gold';
+    }
+
     const values: any[] = [];
     const placeholders = bookings.map((b: any, i: number) => {
-      const offset = i * 8;
-      values.push(b.group_id, b.room_id, b.date, b.time, b.user_name, b.purpose, cancelPinHash, !!b.is_executive);
-      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8})`;
+      const offset = i * 9;
+      values.push(b.group_id, b.room_id, b.date, b.time, b.user_name, b.purpose, cancelPinHash, !!b.is_executive, theme);
+      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9})`;
     }).join(', ');
 
     const result = await db.query(`
-      INSERT INTO bookings (group_id, room_id, date, time, user_name, purpose, cancel_pin_hash, is_executive)
+      INSERT INTO bookings (group_id, room_id, date, time, user_name, purpose, cancel_pin_hash, is_executive, theme)
       VALUES ${placeholders}
       RETURNING *;
     `, values);
@@ -183,8 +194,8 @@ app.delete('/api/bookings/:groupId', async (req, res) => {
     const db = getPool();
 
     // Admin override: if the admin system password is provided and correct, skip PIN check
-    const ADMIN_PASSWORD = '2004';
-    if (adminPassword === ADMIN_PASSWORD) {
+    const VALID_ADMINS = ['2004', '0419', '2008'];
+    if (VALID_ADMINS.includes(adminPassword)) {
       const adminCheck = await db.query(
         'SELECT id FROM bookings WHERE group_id = $1 LIMIT 1',
         [groupId]
@@ -248,8 +259,14 @@ app.put('/api/bookings/:groupId/executive', async (req, res) => {
     const userName = req.body?.userName;
     const purpose = req.body?.purpose;
     
-    const ADMIN_PASSWORD = '2004';
-    if (adminPassword !== ADMIN_PASSWORD) {
+    let theme = 'default';
+    if (adminPassword === '0419') {
+      theme = 'light-blue';
+    } else if (adminPassword === '2008') {
+      theme = 'gold';
+    } else if (adminPassword === '2004') {
+      theme = 'default';
+    } else {
       return res.status(403).json({
         error: 'Admin passcode required to update booking.',
         code: 'UNAUTHORIZED'
@@ -257,9 +274,9 @@ app.put('/api/bookings/:groupId/executive', async (req, res) => {
     }
 
     const db = getPool();
-    let query = 'UPDATE bookings SET is_executive = TRUE';
-    const params: any[] = [groupId];
-    let paramIndex = 2;
+    let query = 'UPDATE bookings SET is_executive = TRUE, theme = $2';
+    const params: any[] = [groupId, theme];
+    let paramIndex = 3;
 
     if (userName) {
       query += `, user_name = $${paramIndex}`;

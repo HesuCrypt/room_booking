@@ -36,6 +36,7 @@ type Booking = {
   userName: string;
   purpose: string;
   isExecutive?: boolean;
+  theme?: string;
 };
 
 const getStartOfWeek = (date: Date) => {
@@ -130,7 +131,8 @@ function RoomBookingPage() {
           time: d.time,
           userName: d.user_name,
           purpose: d.purpose,
-          isExecutive: d.is_executive
+          isExecutive: d.is_executive,
+          theme: d.theme
         }));
         setAllBookings(mappedBookings);
         setDbError(null);
@@ -151,6 +153,18 @@ function RoomBookingPage() {
   const currentMeeting = bookings.find(
     (b) => b.date === currentDateStr && b.time === currentTimeSlot
   );
+
+  const getBookingClass = (booking: Booking) => {
+    if (booking.theme === 'gold') {
+      return 'theme-gold-glowing';
+    } else if (booking.theme === 'light-blue') {
+      return 'theme-light-blue';
+    } else if (booking.isExecutive) {
+      return 'bg-red-600 text-white';
+    } else {
+      return 'bg-black text-white';
+    }
+  };
 
   const getRoomAvailability = (room: string) => {
     const roomBookings = room === selectedRoom ? bookings : [];
@@ -245,8 +259,8 @@ function RoomBookingPage() {
       setError('Cancel PIN must be 4-6 digits.');
       return;
     }
-    if (isExecutiveBooking && cancelPin !== '2004') {
-      setError('Admin passcode is required for Executive Bookings.');
+    if (isExecutiveBooking && !['2004', '0419', '2008'].includes(cancelPin)) {
+      setError('A valid admin passcode is required for Executive Bookings.');
       return;
     }
 
@@ -298,7 +312,8 @@ function RoomBookingPage() {
         time: d.time,
         userName: d.user_name,
         purpose: d.purpose,
-        isExecutive: d.is_executive
+        isExecutive: d.is_executive,
+        theme: d.theme
       }));
       setAllBookings([...allBookings, ...mappedBookings]);
       closeModal();
@@ -322,7 +337,7 @@ function RoomBookingPage() {
     }
   };
 
-  const ADMIN_PASSWORD = '2004';
+  const ADMIN_PASSWORDS = ['2004', '0419', '2008'];
 
   const handleMakeExecutive = async () => {
     if (!pendingDeleteBooking) return;
@@ -345,7 +360,11 @@ function RoomBookingPage() {
         throw new Error(errData.error || 'Failed to update to executive booking');
       }
 
-      setAllBookings(allBookings.map(b => b.groupId === pendingDeleteBooking.groupId ? { ...b, isExecutive: true, userName: editName, purpose: editPurpose } : b));
+      let newTheme = 'default';
+      if (deletePin === '0419') newTheme = 'light-blue';
+      if (deletePin === '2008') newTheme = 'gold';
+
+      setAllBookings(allBookings.map(b => b.groupId === pendingDeleteBooking.groupId ? { ...b, isExecutive: true, userName: editName, purpose: editPurpose, theme: newTheme } : b));
       setIsDeleteModalOpen(false);
       setPendingDeleteBooking(null);
       setDeletePin('');
@@ -361,7 +380,7 @@ function RoomBookingPage() {
     e.preventDefault();
     if (!pendingDeleteBooking) return;
 
-    const isAdmin = deletePin === ADMIN_PASSWORD;
+    const isAdmin = ADMIN_PASSWORDS.includes(deletePin);
     if (!isAdmin && !/^\d{4,6}$/.test(deletePin)) {
       setDeletePinError('Enter your 4–6 digit cancel PIN or the admin passcode.');
       return;
@@ -630,7 +649,7 @@ function RoomBookingPage() {
                       {booking ? (
                         <motion.div
                           layoutId={`booking-${booking.id}`}
-                          className={`absolute inset-1 p-1.5 flex flex-col justify-between group overflow-hidden ${booking.isExecutive ? 'bg-red-600 text-white' : 'bg-black text-white'}`}
+                          className={`absolute inset-1 p-1.5 flex flex-col justify-between group overflow-hidden ${getBookingClass(booking)}`}
                         >
                           <div>
                             <span className="font-bold text-[10px] block leading-tight truncate">{booking.userName}</span>
@@ -685,7 +704,7 @@ function RoomBookingPage() {
                           </div>
                           <div className="flex-1 p-1 bg-white">
                             {booking ? (
-                              <div className={`h-full w-full p-2 flex justify-between items-center ${booking.isExecutive ? 'bg-red-600 text-white' : 'bg-black text-white'}`}>
+                              <div className={`h-full w-full p-2 flex justify-between items-center ${getBookingClass(booking)}`}>
                                 <div className="flex flex-col">
                                   <span className="font-bold text-sm">{booking.userName}</span>
                                   <span className="text-xs">{booking.purpose}</span>
@@ -910,7 +929,7 @@ function RoomBookingPage() {
               </div>
 
               {/* Booking Info */}
-              {deletePin === ADMIN_PASSWORD ? (
+              {ADMIN_PASSWORDS.includes(deletePin) ? (
                 <div className="mb-5 space-y-2 font-mono text-xs border border-black p-3 bg-gray-50">
                   <div>
                     <label className="block uppercase opacity-60 mb-1">Booked by</label>
@@ -992,7 +1011,7 @@ function RoomBookingPage() {
                   >
                     Keep
                   </button>
-                  {deletePin === ADMIN_PASSWORD && (
+                  {ADMIN_PASSWORDS.includes(deletePin) && (
                     <button
                       type="button"
                       onClick={handleMakeExecutive}
