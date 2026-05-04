@@ -361,7 +361,8 @@ function RoomBookingPage() {
       }
 
       let newTheme = 'default';
-      // Theme logic for 0419 and 2008 removed as they are no longer admin passwords
+      if (deletePin === '0419') newTheme = 'light-blue';
+      if (deletePin === '2008') newTheme = 'gold';
 
       setAllBookings(allBookings.map(b => b.groupId === pendingDeleteBooking.groupId ? { ...b, isExecutive: true, userName: editName, purpose: editPurpose, theme: newTheme } : b));
       setIsDeleteModalOpen(false);

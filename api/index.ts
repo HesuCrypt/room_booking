@@ -165,7 +165,11 @@ app.post('/api/bookings', async (req, res) => {
     }
 
     let theme = 'default';
-    // Theme logic for 0419 and 2008 removed
+    if (cancelPin === '0419') {
+      theme = 'light-blue';
+    } else if (cancelPin === '2008') {
+      theme = 'gold';
+    }
 
     const values: any[] = [];
     const placeholders = bookings.map((b: any, i: number) => {
@@ -264,7 +268,11 @@ app.put('/api/bookings/:groupId/executive', async (req, res) => {
     const purpose = req.body?.purpose;
     
     let theme = 'default';
-    if (adminPassword === '2004') {
+    if (adminPassword === '0419') {
+      theme = 'light-blue';
+    } else if (adminPassword === '2008') {
+      theme = 'gold';
+    } else if (adminPassword === '2004') {
       theme = 'default';
     } else {
       return res.status(403).json({
