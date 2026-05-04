@@ -39,6 +39,17 @@ type Booking = {
   theme?: string;
 };
 
+const DolphinIcon = ({ className }: { className?: string }) => (
+  <svg 
+    viewBox="0 0 100 100" 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={className}
+    fill="currentColor"
+  >
+    <path d="M10,70 Q30,20 60,30 T90,70 Q70,90 50,70 T10,70" />
+  </svg>
+);
+
 const getStartOfWeek = (date: Date) => {
   const d = new Date(date);
   const day = d.getDay();
@@ -348,7 +359,7 @@ function RoomBookingPage() {
       const response = await fetch(`/api/bookings/${pendingDeleteBooking.groupId}/executive`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           adminPassword: deletePin,
           userName: editName,
           purpose: editPurpose
@@ -653,6 +664,7 @@ function RoomBookingPage() {
                         >
                           <div className="relative">
                             {booking.theme === 'gold' && <Crown className="w-3 h-3 absolute -top-1 -right-1 text-yellow-900 animate-bounce" />}
+                            {booking.theme === 'light-blue' && <DolphinIcon className="w-3 h-3 absolute -top-1 -right-1 text-blue-900 animate-bounce" />}
                             <span className="font-bold text-[10px] block leading-tight truncate">{booking.userName}</span>
                             <span className="text-[9px] mt-0.5 block leading-tight truncate opacity-80">{booking.purpose}</span>
                           </div>
@@ -708,6 +720,7 @@ function RoomBookingPage() {
                               <div className={`h-full w-full p-2 flex justify-between items-center ${getBookingClass(booking)}`}>
                                 <div className="flex flex-col relative">
                                   {booking.theme === 'gold' && <Crown className="w-4 h-4 absolute -top-2 -right-6 text-yellow-900 animate-bounce" />}
+                                  {booking.theme === 'light-blue' && <DolphinIcon className="w-4 h-4 absolute -top-2 -right-6 text-blue-900 animate-bounce" />}
                                   <span className="font-bold text-sm">{booking.userName}</span>
                                   <span className="text-xs">{booking.purpose}</span>
                                 </div>
@@ -935,7 +948,7 @@ function RoomBookingPage() {
                 <div className="mb-5 space-y-2 font-mono text-xs border border-black p-3 bg-gray-50">
                   <div>
                     <label className="block uppercase opacity-60 mb-1">Booked by</label>
-                    <input 
+                    <input
                       value={editName}
                       onChange={e => setEditName(e.target.value)}
                       className="w-full border border-black p-2 outline-none focus:ring-1 focus:ring-black bg-white text-black font-bold"
@@ -943,7 +956,7 @@ function RoomBookingPage() {
                   </div>
                   <div>
                     <label className="block uppercase opacity-60 mb-1">Purpose</label>
-                    <input 
+                    <input
                       value={editPurpose}
                       onChange={e => setEditPurpose(e.target.value)}
                       className="w-full border border-black p-2 outline-none focus:ring-1 focus:ring-black bg-white text-black font-bold"
