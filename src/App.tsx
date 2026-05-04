@@ -35,6 +35,7 @@ type Booking = {
   time: string;
   userName: string;
   purpose: string;
+  isExecutive?: boolean;
 };
 
 const getStartOfWeek = (date: Date) => {
@@ -82,6 +83,7 @@ function RoomBookingPage() {
   const [userName, setUserName] = useState('');
   const [purpose, setPurpose] = useState('');
   const [cancelPin, setCancelPin] = useState('');
+  const [isExecutiveBooking, setIsExecutiveBooking] = useState(false);
   const [endTime, setEndTime] = useState('');
   const [recurrence, setRecurrence] = useState<'none' | 'daily' | 'weekly'>('none');
   const [recurrenceEnd, setRecurrenceEnd] = useState<string>('');
@@ -90,11 +92,12 @@ function RoomBookingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [dbError, setDbError] = useState<{ message: string, code?: string } | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
-  // Delete modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deletePin, setDeletePin] = useState('');
   const [deletePinError, setDeletePinError] = useState<string | null>(null);
   const [pendingDeleteBooking, setPendingDeleteBooking] = useState<Booking | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editPurpose, setEditPurpose] = useState('');
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -126,7 +129,8 @@ function RoomBookingPage() {
           date: d.date,
           time: d.time,
           userName: d.user_name,
-          purpose: d.purpose
+          purpose: d.purpose,
+          isExecutive: d.is_executive
         }));
         setAllBookings(mappedBookings);
         setDbError(null);
@@ -178,6 +182,7 @@ function RoomBookingPage() {
     setUserName('');
     setPurpose('');
     setCancelPin('');
+    setIsExecutiveBooking(false);
     setError(null);
     setIsModalOpen(true);
   };
@@ -240,6 +245,10 @@ function RoomBookingPage() {
       setError('Cancel PIN must be 4-6 digits.');
       return;
     }
+    if (isExecutiveBooking && cancelPin !== '2004') {
+      setError('Admin passcode is required for Executive Bookings.');
+      return;
+    }
 
     const slotsToBook = getPreviewSlots();
     if (slotsToBook.length === 0) {
@@ -265,6 +274,7 @@ function RoomBookingPage() {
       user_name: userName.trim(),
       purpose: purpose.trim(),
       cancel_pin: cancelPin,
+      is_executive: isExecutiveBooking
     }));
 
     try {
@@ -287,7 +297,8 @@ function RoomBookingPage() {
         date: d.date,
         time: d.time,
         userName: d.user_name,
-        purpose: d.purpose
+        purpose: d.purpose,
+        isExecutive: d.is_executive
       }));
       setAllBookings([...allBookings, ...mappedBookings]);
       closeModal();
@@ -305,11 +316,46 @@ function RoomBookingPage() {
       setPendingDeleteBooking(bookingToDelete);
       setDeletePin('');
       setDeletePinError(null);
+      setEditName(bookingToDelete.userName);
+      setEditPurpose(bookingToDelete.purpose);
       setIsDeleteModalOpen(true);
     }
   };
 
   const ADMIN_PASSWORD = '2004';
+
+  const handleMakeExecutive = async () => {
+    if (!pendingDeleteBooking) return;
+    setDeletePinError(null);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`/api/bookings/${pendingDeleteBooking.groupId}/executive`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          adminPassword: deletePin,
+          userName: editName,
+          purpose: editPurpose
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Failed to update to executive booking');
+      }
+
+      setAllBookings(allBookings.map(b => b.groupId === pendingDeleteBooking.groupId ? { ...b, isExecutive: true, userName: editName, purpose: editPurpose } : b));
+      setIsDeleteModalOpen(false);
+      setPendingDeleteBooking(null);
+      setDeletePin('');
+    } catch (err: any) {
+      console.error('Error updating booking:', err);
+      setDeletePinError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const confirmDelete = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -584,7 +630,7 @@ function RoomBookingPage() {
                       {booking ? (
                         <motion.div
                           layoutId={`booking-${booking.id}`}
-                          className="absolute inset-1 bg-black text-white p-1.5 flex flex-col justify-between group overflow-hidden"
+                          className={`absolute inset-1 p-1.5 flex flex-col justify-between group overflow-hidden ${booking.isExecutive ? 'bg-red-600 text-white' : 'bg-black text-white'}`}
                         >
                           <div>
                             <span className="font-bold text-[10px] block leading-tight truncate">{booking.userName}</span>
@@ -639,7 +685,7 @@ function RoomBookingPage() {
                           </div>
                           <div className="flex-1 p-1 bg-white">
                             {booking ? (
-                              <div className="h-full w-full bg-black text-white p-2 flex justify-between items-center">
+                              <div className={`h-full w-full p-2 flex justify-between items-center ${booking.isExecutive ? 'bg-red-600 text-white' : 'bg-black text-white'}`}>
                                 <div className="flex flex-col">
                                   <span className="font-bold text-sm">{booking.userName}</span>
                                   <span className="text-xs">{booking.purpose}</span>
@@ -813,6 +859,17 @@ function RoomBookingPage() {
                     placeholder="ENTER PIN"
                   />
                 </div>
+                <div>
+                  <label className="flex items-center gap-2 mb-2 cursor-pointer mt-2">
+                    <input
+                      type="checkbox"
+                      checked={isExecutiveBooking}
+                      onChange={e => setIsExecutiveBooking(e.target.checked)}
+                      className="w-4 h-4 border-black accent-black"
+                    />
+                    <span className="text-sm font-bold uppercase">Executive Booking (Admin Only)</span>
+                  </label>
+                </div>
                 <button
                   type="submit"
                   disabled={isLoading}
@@ -853,24 +910,53 @@ function RoomBookingPage() {
               </div>
 
               {/* Booking Info */}
-              <div className="mb-5 space-y-1.5 font-mono text-xs border border-black p-3 bg-gray-50">
-                <div className="flex justify-between">
-                  <span className="uppercase opacity-60">Booked by</span>
-                  <span className="font-bold">{pendingDeleteBooking.userName}</span>
+              {deletePin === ADMIN_PASSWORD ? (
+                <div className="mb-5 space-y-2 font-mono text-xs border border-black p-3 bg-gray-50">
+                  <div>
+                    <label className="block uppercase opacity-60 mb-1">Booked by</label>
+                    <input 
+                      value={editName}
+                      onChange={e => setEditName(e.target.value)}
+                      className="w-full border border-black p-2 outline-none focus:ring-1 focus:ring-black bg-white text-black font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block uppercase opacity-60 mb-1">Purpose</label>
+                    <input 
+                      value={editPurpose}
+                      onChange={e => setEditPurpose(e.target.value)}
+                      className="w-full border border-black p-2 outline-none focus:ring-1 focus:ring-black bg-white text-black font-bold"
+                    />
+                  </div>
+                  <div className="flex justify-between mt-2 pt-2 border-t border-black">
+                    <span className="uppercase opacity-60">Date</span>
+                    <span className="font-bold">{pendingDeleteBooking.date}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="uppercase opacity-60">Time</span>
+                    <span className="font-bold">{pendingDeleteBooking.time}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="uppercase opacity-60">Purpose</span>
-                  <span className="font-bold truncate max-w-[160px]">{pendingDeleteBooking.purpose}</span>
+              ) : (
+                <div className="mb-5 space-y-1.5 font-mono text-xs border border-black p-3 bg-gray-50">
+                  <div className="flex justify-between">
+                    <span className="uppercase opacity-60">Booked by</span>
+                    <span className="font-bold">{pendingDeleteBooking.userName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="uppercase opacity-60">Purpose</span>
+                    <span className="font-bold truncate max-w-[160px]">{pendingDeleteBooking.purpose}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="uppercase opacity-60">Date</span>
+                    <span className="font-bold">{pendingDeleteBooking.date}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="uppercase opacity-60">Time</span>
+                    <span className="font-bold">{pendingDeleteBooking.time}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="uppercase opacity-60">Date</span>
-                  <span className="font-bold">{pendingDeleteBooking.date}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="uppercase opacity-60">Time</span>
-                  <span className="font-bold">{pendingDeleteBooking.time}</span>
-                </div>
-              </div>
+              )}
 
               {/* PIN Form */}
               <form onSubmit={confirmDelete} className="space-y-4">
@@ -906,6 +992,16 @@ function RoomBookingPage() {
                   >
                     Keep
                   </button>
+                  {deletePin === ADMIN_PASSWORD && (
+                    <button
+                      type="button"
+                      onClick={handleMakeExecutive}
+                      disabled={isLoading}
+                      className="flex-1 bg-red-600 text-white font-bold uppercase tracking-widest p-3 hover:bg-red-700 border-2 border-black transition-colors min-h-[44px] disabled:opacity-50"
+                    >
+                      {isLoading ? 'Wait...' : 'Make Exec'}
+                    </button>
+                  )}
                   <button
                     type="submit"
                     disabled={isLoading || !deletePin}

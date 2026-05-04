@@ -56,6 +56,10 @@ async function ensureDB() {
       ALTER TABLE bookings
       ADD COLUMN IF NOT EXISTS cancel_pin_hash TEXT;
     `);
+    await db.query(`
+      ALTER TABLE bookings
+      ADD COLUMN IF NOT EXISTS is_executive BOOLEAN DEFAULT FALSE;
+    `);
     isInitialized = true;
   } catch (e: any) {
     console.error("Database connection/init failed:", e.message);
@@ -150,13 +154,13 @@ app.post('/api/bookings', async (req, res) => {
 
     const values: any[] = [];
     const placeholders = bookings.map((b: any, i: number) => {
-      const offset = i * 7;
-      values.push(b.group_id, b.room_id, b.date, b.time, b.user_name, b.purpose, cancelPinHash);
-      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7})`;
+      const offset = i * 8;
+      values.push(b.group_id, b.room_id, b.date, b.time, b.user_name, b.purpose, cancelPinHash, !!b.is_executive);
+      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8})`;
     }).join(', ');
 
     const result = await db.query(`
-      INSERT INTO bookings (group_id, room_id, date, time, user_name, purpose, cancel_pin_hash)
+      INSERT INTO bookings (group_id, room_id, date, time, user_name, purpose, cancel_pin_hash, is_executive)
       VALUES ${placeholders}
       RETURNING *;
     `, values);
@@ -229,6 +233,59 @@ app.delete('/api/bookings/:groupId', async (req, res) => {
     res.json({ success: true });
   } catch (e: any) {
     res.status(e.code === 'MISSING_SECRET' || e.code === 'INVALID_SECRET' ? 503 : 500).json({ 
+      error: e.message,
+      code: e.code || 'INTERNAL_ERROR'
+    });
+  }
+});
+
+app.put('/api/bookings/:groupId/executive', async (req, res) => {
+  try {
+    await ensureDB();
+    const { groupId } = req.params;
+    const adminPassword = String(req.body?.adminPassword || '');
+    
+    const userName = req.body?.userName;
+    const purpose = req.body?.purpose;
+    
+    const ADMIN_PASSWORD = '2004';
+    if (adminPassword !== ADMIN_PASSWORD) {
+      return res.status(403).json({
+        error: 'Admin passcode required to update booking.',
+        code: 'UNAUTHORIZED'
+      });
+    }
+
+    const db = getPool();
+    let query = 'UPDATE bookings SET is_executive = TRUE';
+    const params: any[] = [groupId];
+    let paramIndex = 2;
+
+    if (userName) {
+      query += `, user_name = $${paramIndex}`;
+      params.push(userName);
+      paramIndex++;
+    }
+    if (purpose) {
+      query += `, purpose = $${paramIndex}`;
+      params.push(purpose);
+      paramIndex++;
+    }
+
+    query += ' WHERE group_id = $1 RETURNING *';
+
+    const result = await db.query(query, params);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Booking not found.',
+        code: 'NOT_FOUND'
+      });
+    }
+
+    res.json({ success: true, bookings: result.rows });
+  } catch (e: any) {
+    res.status(500).json({ 
       error: e.message,
       code: e.code || 'INTERNAL_ERROR'
     });
