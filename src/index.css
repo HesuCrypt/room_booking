@@ -24,16 +24,43 @@
   }
 
   .theme-gold-glowing {
-    background: linear-gradient(135deg, #fef08a 0%, #eab308 50%, #ca8a04 100%);
+    background: linear-gradient(135deg, #fef08a 0%, #eab308 50%, #ca8a04 100%, #fef08a 150%);
+    background-size: 200% 200%;
     color: #000;
     border: 2px solid #fef08a;
     box-shadow: 0 0 15px #eab308;
-    animation: gold-pulse 2s infinite;
+    animation: gold-pulse 2s infinite, gradient-shift 3s ease infinite;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .theme-gold-glowing::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.7), transparent);
+    transform: skewX(-25deg);
+    animation: shine 3s infinite;
   }
   
   @keyframes gold-pulse {
-    0% { box-shadow: 0 0 15px #eab308; }
-    50% { box-shadow: 0 0 30px #fef08a; }
-    100% { box-shadow: 0 0 15px #eab308; }
+    0% { box-shadow: 0 0 15px #eab308, inset 0 0 10px #fef08a; }
+    50% { box-shadow: 0 0 35px #fef08a, inset 0 0 20px #ffffff; border-color: #ffffff; }
+    100% { box-shadow: 0 0 15px #eab308, inset 0 0 10px #fef08a; }
+  }
+
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes shine {
+    0% { left: -100%; }
+    20% { left: 200%; }
+    100% { left: 200%; }
   }
 }
