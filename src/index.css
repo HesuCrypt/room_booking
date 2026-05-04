@@ -4,11 +4,12 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .theme-light-blue {
     background: linear-gradient(
       135deg, 
@@ -61,14 +62,12 @@
   }
 
   .theme-gold-glowing {
-    background: linear-gradient(
-      135deg, 
-      #fef08a 0%, 
-      #eab308 25%, 
-      #fde047 50%, 
-      #eab308 75%, 
-      #ca8a04 100%
-    );
+    background: linear-gradient(135deg,
+        #fef08a 0%,
+        #eab308 25%,
+        #fde047 50%,
+        #eab308 75%,
+        #ca8a04 100%);
     background-size: 200% 200%;
     color: #000;
     border: 2px solid #fef08a;
@@ -85,29 +84,45 @@
     left: -50%;
     width: 200%;
     height: 200%;
-    background: linear-gradient(
-      45deg,
-      transparent 45%,
-      rgba(255, 255, 255, 0.6) 50%,
-      transparent 55%
-    );
+    background: linear-gradient(45deg,
+        transparent 45%,
+        rgba(255, 255, 255, 0.6) 50%,
+        transparent 55%);
     animation: gold-flare 3s infinite;
     pointer-events: none;
   }
-  
+
   @keyframes gold-pulse {
-    0% { box-shadow: 0 0 20px #eab308, 0 0 40px rgba(234, 179, 8, 0.4); }
-    50% { box-shadow: 0 0 35px #fef08a, 0 0 60px rgba(254, 240, 138, 0.6); }
-    100% { box-shadow: 0 0 20px #eab308, 0 0 40px rgba(234, 179, 8, 0.4); }
+    0% {
+      box-shadow: 0 0 20px #eab308, 0 0 40px rgba(234, 179, 8, 0.4);
+    }
+
+    50% {
+      box-shadow: 0 0 35px #fef08a, 0 0 60px rgba(254, 240, 138, 0.6);
+    }
+
+    100% {
+      box-shadow: 0 0 20px #eab308, 0 0 40px rgba(234, 179, 8, 0.4);
+    }
   }
 
   @keyframes gold-shimmer {
-    0% { background-position: 0% 0%; }
-    100% { background-position: 200% 200%; }
+    0% {
+      background-position: 0% 0%;
+    }
+
+    100% {
+      background-position: 200% 200%;
+    }
   }
 
   @keyframes gold-flare {
-    0% { transform: translate(-100%, -100%) rotate(45deg); }
-    100% { transform: translate(100%, 100%) rotate(45deg); }
+    0% {
+      transform: translate(-100%, -100%) rotate(45deg);
+    }
+
+    100% {
+      transform: translate(100%, 100%) rotate(45deg);
+    }
   }
 }
