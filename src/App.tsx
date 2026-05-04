@@ -259,7 +259,7 @@ function RoomBookingPage() {
       setError('Cancel PIN must be 4-6 digits.');
       return;
     }
-    if (isExecutiveBooking && !['2004', '0419', '2008'].includes(cancelPin)) {
+    if (isExecutiveBooking && cancelPin !== '2004') {
       setError('A valid admin passcode is required for Executive Bookings.');
       return;
     }
@@ -337,7 +337,7 @@ function RoomBookingPage() {
     }
   };
 
-  const ADMIN_PASSWORDS = ['2004', '0419', '2008'];
+  const ADMIN_PASSWORDS = ['2004'];
 
   const handleMakeExecutive = async () => {
     if (!pendingDeleteBooking) return;
@@ -361,8 +361,7 @@ function RoomBookingPage() {
       }
 
       let newTheme = 'default';
-      if (deletePin === '0419') newTheme = 'light-blue';
-      if (deletePin === '2008') newTheme = 'gold';
+      // Theme logic for 0419 and 2008 removed as they are no longer admin passwords
 
       setAllBookings(allBookings.map(b => b.groupId === pendingDeleteBooking.groupId ? { ...b, isExecutive: true, userName: editName, purpose: editPurpose, theme: newTheme } : b));
       setIsDeleteModalOpen(false);

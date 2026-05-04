@@ -165,11 +165,7 @@ app.post('/api/bookings', async (req, res) => {
     }
 
     let theme = 'default';
-    if (cancelPin === '0419') {
-      theme = 'light-blue';
-    } else if (cancelPin === '2008') {
-      theme = 'gold';
-    }
+    // Theme logic for 0419 and 2008 removed
 
     const values: any[] = [];
     const placeholders = bookings.map((b: any, i: number) => {
@@ -202,7 +198,7 @@ app.delete('/api/bookings/:groupId', async (req, res) => {
     const db = getPool();
 
     // Admin override: if the admin system password is provided and correct, skip PIN check
-    const VALID_ADMINS = ['2004', '0419', '2008'];
+    const VALID_ADMINS = ['2004'];
     if (VALID_ADMINS.includes(adminPassword)) {
       const adminCheck = await db.query(
         'SELECT id FROM bookings WHERE group_id = $1 LIMIT 1',
@@ -268,11 +264,7 @@ app.put('/api/bookings/:groupId/executive', async (req, res) => {
     const purpose = req.body?.purpose;
     
     let theme = 'default';
-    if (adminPassword === '0419') {
-      theme = 'light-blue';
-    } else if (adminPassword === '2008') {
-      theme = 'gold';
-    } else if (adminPassword === '2004') {
+    if (adminPassword === '2004') {
       theme = 'default';
     } else {
       return res.status(403).json({
