@@ -9,12 +9,11 @@ type RoomConfig = {
 };
 
 const ROOMS: RoomConfig[] = [
-  { slug: 'meeting-room-a', id: 'Meeting Room A - conference room' },
-  { slug: 'meeting-room-b', id: 'Meeting Room B - The one beside the room with bean bags' },
-  { slug: 'meeting-room-c', id: 'Meeting Room C - with bean bags' },
-  { slug: 'pod-1', id: 'Pod 1 - Near recep' },
-  { slug: 'pod-2', id: 'Pod 2 - Near the door' },
-  { slug: 'av-training-room', id: 'AV training room' }
+  { slug: 'conference-room', id: 'conference room' },
+  { slug: 'small-meeting-01', id: '01 - small meeting room' },
+  { slug: 'small-meeting-02', id: '02 - small meeting room' },
+  { slug: 'pod-room-01', id: '01 - pod room' },
+  { slug: 'pod-room-02', id: '02 - pod room' }
 ];
 const DEFAULT_ROOM_SLUG = ROOMS[0].slug;
 const ROOM_BY_SLUG = ROOMS.reduce<Record<string, RoomConfig>>((acc, room) => {
@@ -38,19 +37,6 @@ type Booking = {
   isExecutive?: boolean;
   theme?: string;
 };
-
-type Booking = {
-  id: string;
-  groupId: string;
-  roomId: string;
-  date: string;
-  time: string;
-  userName: string;
-  purpose: string;
-  isExecutive?: boolean;
-  theme?: string;
-};
-
 
 const getStartOfWeek = (date: Date) => {
   const d = new Date(date);
@@ -665,9 +651,7 @@ function RoomBookingPage() {
                           className={`absolute inset-1 p-1.5 flex flex-col justify-between group overflow-hidden ${getBookingClass(booking)}`}
                         >
                           <div className="relative">
-                            {(booking.theme === 'gold' || booking.theme === 'light-blue') && (
-                              <Crown className={`w-3 h-3 absolute -top-1 -right-1 animate-bounce ${booking.theme === 'gold' ? 'text-yellow-900' : 'text-blue-900'}`} />
-                            )}
+                            {booking.theme === 'gold' && <Crown className="w-3 h-3 absolute -top-1 -right-1 text-yellow-900 animate-bounce" />}
                             <span className="font-bold text-[10px] block leading-tight truncate">{booking.userName}</span>
                             <span className="text-[9px] mt-0.5 block leading-tight truncate opacity-80">{booking.purpose}</span>
                           </div>
@@ -722,9 +706,7 @@ function RoomBookingPage() {
                             {booking ? (
                               <div className={`h-full w-full p-2 flex justify-between items-center ${getBookingClass(booking)}`}>
                                 <div className="flex flex-col relative">
-                                  {(booking.theme === 'gold' || booking.theme === 'light-blue') && (
-                                    <Crown className={`w-4 h-4 absolute -top-2 -right-6 animate-bounce ${booking.theme === 'gold' ? 'text-yellow-900' : 'text-blue-900'}`} />
-                                  )}
+                                  {booking.theme === 'gold' && <Crown className="w-4 h-4 absolute -top-2 -right-6 text-yellow-900 animate-bounce" />}
                                   <span className="font-bold text-sm">{booking.userName}</span>
                                   <span className="text-xs">{booking.purpose}</span>
                                 </div>

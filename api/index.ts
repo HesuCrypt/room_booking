@@ -64,6 +64,14 @@ async function ensureDB() {
       ALTER TABLE bookings
       ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'default';
     `);
+    // Migrate old room names to new names
+    await db.query(`
+      UPDATE bookings SET room_id = 'conference room' WHERE room_id = 'Meeting Room A - conference room';
+      UPDATE bookings SET room_id = '01 - small meeting room' WHERE room_id = 'Meeting Room B - The one beside the room with bean bags';
+      UPDATE bookings SET room_id = '02 - small meeting room' WHERE room_id = 'Meeting Room C - with bean bags';
+      UPDATE bookings SET room_id = '01 - pod room' WHERE room_id = 'Pod 1 - Near recep';
+      UPDATE bookings SET room_id = '02 - pod room' WHERE room_id = 'Pod 2 - Near the door';
+    `);
     isInitialized = true;
   } catch (e: any) {
     console.error("Database connection/init failed:", e.message);
