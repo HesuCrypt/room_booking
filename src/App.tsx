@@ -649,11 +649,12 @@ function RoomBookingPage() {
                       {booking ? (
                         <motion.div
                           layoutId={`booking-${booking.id}`}
-                          className={`absolute inset-0.5 p-1.5 flex flex-col justify-between group overflow-hidden ${getBookingClass(booking)}`}
+                          className={`absolute inset-1 p-1.5 flex flex-col justify-between group overflow-hidden ${getBookingClass(booking)}`}
                         >
                           {booking.theme === 'gold' && (
                             <>
                               <Crown className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 text-black/80 z-20 rotate-12" />
+                              <Crown className="absolute top-0.5 left-0.5 w-2.5 h-2.5 text-black/30 z-20 -rotate-12" />
                               <Sparkles className="absolute bottom-1 right-1 w-2.5 h-2.5 text-black/40 z-20 animate-pulse" />
                             </>
                           )}
