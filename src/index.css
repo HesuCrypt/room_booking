@@ -10,40 +10,33 @@
   }
   
   .theme-light-blue {
-    background: linear-gradient(135deg, #60a5fa 0%, #2563eb 50%, #1e40af 100%, #60a5fa 150%);
-    background-size: 200% 200%;
+    background: linear-gradient(135deg, #bfdbfe 0%, #3b82f6 50%, #1d4ed8 100%);
     color: #fff;
-    box-shadow: 0 0 5px rgba(59, 130, 246, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
-    animation: blue-pulse 2s infinite, gradient-shift 3s ease infinite;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .theme-light-blue::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 50%;
-    height: 100%;
-    background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent);
-    transform: skewX(-25deg);
-    animation: shine 3s infinite;
-    animation-delay: 1.5s;
+    border: 2px solid #bfdbfe;
+    box-shadow: 0 0 15px #3b82f6;
+    animation: blue-pulse 2s infinite;
   }
   
   @keyframes blue-pulse {
-    0% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.2); }
-    50% { box-shadow: 0 0 10px rgba(147, 197, 253, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.4); }
-    100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.2); }
+    0% { box-shadow: 0 0 15px #3b82f6; }
+    50% { box-shadow: 0 0 30px #bfdbfe; }
+    100% { box-shadow: 0 0 15px #3b82f6; }
   }
 
   .theme-gold-glowing {
-    background: linear-gradient(135deg, #fef08a 0%, #eab308 50%, #ca8a04 100%, #fef08a 150%);
+    background: linear-gradient(
+      135deg, 
+      #fef08a 0%, 
+      #eab308 25%, 
+      #fde047 50%, 
+      #eab308 75%, 
+      #ca8a04 100%
+    );
     background-size: 200% 200%;
     color: #000;
-    box-shadow: 0 0 5px rgba(234, 179, 8, 0.4), inset 0 0 0 1px rgba(254, 240, 138, 0.4);
-    animation: gold-pulse 2s infinite, gradient-shift 3s ease infinite;
+    border: 2px solid #fef08a;
+    box-shadow: 0 0 20px #eab308, 0 0 40px rgba(234, 179, 8, 0.4);
+    animation: gold-pulse 2s infinite, gold-shimmer 3s linear infinite;
     position: relative;
     overflow: hidden;
   }
@@ -51,30 +44,33 @@
   .theme-gold-glowing::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: -100%;
-    width: 50%;
-    height: 100%;
-    background: linear-gradient(to right, transparent, rgba(255,255,255,0.6), transparent);
-    transform: skewX(-25deg);
-    animation: shine 3s infinite;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      45deg,
+      transparent 45%,
+      rgba(255, 255, 255, 0.6) 50%,
+      transparent 55%
+    );
+    animation: gold-flare 3s infinite;
+    pointer-events: none;
   }
   
   @keyframes gold-pulse {
-    0% { box-shadow: 0 0 5px rgba(234, 179, 8, 0.3), inset 0 0 0 1px rgba(254, 240, 138, 0.2); }
-    50% { box-shadow: 0 0 12px rgba(254, 240, 138, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.5); }
-    100% { box-shadow: 0 0 5px rgba(234, 179, 8, 0.3), inset 0 0 0 1px rgba(254, 240, 138, 0.2); }
+    0% { box-shadow: 0 0 20px #eab308, 0 0 40px rgba(234, 179, 8, 0.4); }
+    50% { box-shadow: 0 0 35px #fef08a, 0 0 60px rgba(254, 240, 138, 0.6); }
+    100% { box-shadow: 0 0 20px #eab308, 0 0 40px rgba(234, 179, 8, 0.4); }
   }
 
-  @keyframes gradient-shift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  @keyframes gold-shimmer {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 200% 200%; }
   }
 
-  @keyframes shine {
-    0% { left: -100%; }
-    20% { left: 200%; }
-    100% { left: 200%; }
+  @keyframes gold-flare {
+    0% { transform: translate(-100%, -100%) rotate(45deg); }
+    100% { transform: translate(100%, 100%) rotate(45deg); }
   }
 }

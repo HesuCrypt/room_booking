@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2, ChevronDown, Crown, Sparkles } from 'lucide-react';
+import { Plus, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2, ChevronDown, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { NavLink, Navigate, Route, Routes, useParams } from 'react-router-dom';
 
@@ -649,20 +649,10 @@ function RoomBookingPage() {
                       {booking ? (
                         <motion.div
                           layoutId={`booking-${booking.id}`}
-                          className={`absolute inset-0 p-1.5 flex flex-col justify-between group overflow-hidden ${getBookingClass(booking)}`}
+                          className={`absolute inset-1 p-1.5 flex flex-col justify-between group overflow-hidden ${getBookingClass(booking)}`}
                         >
-                          {booking.theme === 'gold' && (
-                            <>
-                              <Crown className="absolute -top-1 -right-1 w-4.5 h-4.5 text-black/90 z-20 rotate-12 drop-shadow-sm" />
-                              <Crown className="absolute top-0.5 left-0.5 w-3 h-3 text-black/30 z-20 -rotate-12" />
-                              <Crown className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 text-black/20 z-20" />
-                              <Sparkles className="absolute bottom-1 right-1 w-2.5 h-2.5 text-black/40 z-20 animate-pulse" />
-                            </>
-                          )}
-                          {booking.theme === 'light-blue' && (
-                            <Sparkles className="absolute top-1 right-1 w-2.5 h-2.5 text-white/60 z-20 animate-pulse" />
-                          )}
-                          <div>
+                          <div className="relative">
+                            {booking.theme === 'gold' && <Crown className="w-3 h-3 absolute -top-1 -right-1 text-yellow-900 animate-bounce" />}
                             <span className="font-bold text-[10px] block leading-tight truncate">{booking.userName}</span>
                             <span className="text-[9px] mt-0.5 block leading-tight truncate opacity-80">{booking.purpose}</span>
                           </div>
@@ -715,11 +705,9 @@ function RoomBookingPage() {
                           </div>
                           <div className="flex-1 p-1 bg-white">
                             {booking ? (
-                              <div className={`h-full w-full p-2 flex justify-between items-center relative overflow-hidden ${getBookingClass(booking)}`}>
-                                {booking.theme === 'gold' && (
-                                  <Crown className="absolute top-1 right-8 w-3 h-3 text-black/80 z-20" />
-                                )}
-                                <div className="flex flex-col relative z-10">
+                              <div className={`h-full w-full p-2 flex justify-between items-center ${getBookingClass(booking)}`}>
+                                <div className="flex flex-col relative">
+                                  {booking.theme === 'gold' && <Crown className="w-4 h-4 absolute -top-2 -right-6 text-yellow-900 animate-bounce" />}
                                   <span className="font-bold text-sm">{booking.userName}</span>
                                   <span className="text-xs">{booking.purpose}</span>
                                 </div>
