@@ -39,16 +39,18 @@ type Booking = {
   theme?: string;
 };
 
-const DolphinIcon = ({ className }: { className?: string }) => (
-  <svg 
-    viewBox="0 0 100 100" 
-    xmlns="http://www.w3.org/2000/svg" 
-    className={className}
-    fill="currentColor"
-  >
-    <path d="M10,70 Q30,20 60,30 T90,70 Q70,90 50,70 T10,70" />
-  </svg>
-);
+type Booking = {
+  id: string;
+  groupId: string;
+  roomId: string;
+  date: string;
+  time: string;
+  userName: string;
+  purpose: string;
+  isExecutive?: boolean;
+  theme?: string;
+};
+
 
 const getStartOfWeek = (date: Date) => {
   const d = new Date(date);
@@ -663,8 +665,9 @@ function RoomBookingPage() {
                           className={`absolute inset-1 p-1.5 flex flex-col justify-between group overflow-hidden ${getBookingClass(booking)}`}
                         >
                           <div className="relative">
-                            {booking.theme === 'gold' && <Crown className="w-3 h-3 absolute -top-1 -right-1 text-yellow-900 animate-bounce" />}
-                            {booking.theme === 'light-blue' && <DolphinIcon className="w-3 h-3 absolute -top-1 -right-1 text-blue-900 animate-bounce" />}
+                            {(booking.theme === 'gold' || booking.theme === 'light-blue') && (
+                              <Crown className={`w-3 h-3 absolute -top-1 -right-1 animate-bounce ${booking.theme === 'gold' ? 'text-yellow-900' : 'text-blue-900'}`} />
+                            )}
                             <span className="font-bold text-[10px] block leading-tight truncate">{booking.userName}</span>
                             <span className="text-[9px] mt-0.5 block leading-tight truncate opacity-80">{booking.purpose}</span>
                           </div>
@@ -719,8 +722,9 @@ function RoomBookingPage() {
                             {booking ? (
                               <div className={`h-full w-full p-2 flex justify-between items-center ${getBookingClass(booking)}`}>
                                 <div className="flex flex-col relative">
-                                  {booking.theme === 'gold' && <Crown className="w-4 h-4 absolute -top-2 -right-6 text-yellow-900 animate-bounce" />}
-                                  {booking.theme === 'light-blue' && <DolphinIcon className="w-4 h-4 absolute -top-2 -right-6 text-blue-900 animate-bounce" />}
+                                  {(booking.theme === 'gold' || booking.theme === 'light-blue') && (
+                                    <Crown className={`w-4 h-4 absolute -top-2 -right-6 animate-bounce ${booking.theme === 'gold' ? 'text-yellow-900' : 'text-blue-900'}`} />
+                                  )}
                                   <span className="font-bold text-sm">{booking.userName}</span>
                                   <span className="text-xs">{booking.purpose}</span>
                                 </div>
