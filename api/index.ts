@@ -26,8 +26,8 @@ function getPool() {
       (err as any).code = 'INVALID_SECRET';
       throw err;
     }
-    
-    pool = new Pool({ 
+
+    pool = new Pool({
       connectionString,
       ssl: { rejectUnauthorized: false }
     });
@@ -80,9 +80,9 @@ async function ensureDB() {
 
 // Diagnostic Route
 app.get('/api/test', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    message: 'API is alive!', 
+  res.json({
+    status: 'ok',
+    message: 'API is alive!',
     timestamp: new Date().toISOString(),
     env: {
       has_db_url: !!process.env.DATABASE_URL,
@@ -99,7 +99,7 @@ app.get('/api/bookings', async (req, res) => {
     const { roomId, startDate, endDate } = req.query;
     const db = getPool();
     let result;
-    
+
     if (roomId) {
       result = await db.query(
         'SELECT * FROM bookings WHERE room_id = $1 AND date >= $2 AND date <= $3',
@@ -113,7 +113,7 @@ app.get('/api/bookings', async (req, res) => {
     }
     res.json(result.rows);
   } catch (e: any) {
-    res.status(e.code === 'MISSING_SECRET' || e.code === 'INVALID_SECRET' ? 503 : 500).json({ 
+    res.status(e.code === 'MISSING_SECRET' || e.code === 'INVALID_SECRET' ? 503 : 500).json({
       error: e.message,
       code: e.code || 'INTERNAL_ERROR'
     });
@@ -125,7 +125,7 @@ app.post('/api/bookings', async (req, res) => {
     await ensureDB();
     const bookings = req.body;
     const db = getPool();
-    
+
     if (!bookings || !bookings.length) {
       res.json([]);
       return;
@@ -158,7 +158,7 @@ app.post('/api/bookings', async (req, res) => {
     }
 
     if (conflicts.length > 0) {
-      return res.status(409).json({ 
+      return res.status(409).json({
         error: `Conflict detected for: ${conflicts.slice(0, 3).join(', ')}`,
         code: 'CONFLICT'
       });
@@ -169,6 +169,8 @@ app.post('/api/bookings', async (req, res) => {
       theme = 'light-blue';
     } else if (cancelPin === '2008') {
       theme = 'gold';
+    } else if (cancelPin === '0001') {
+      theme = 'purple';
     }
 
     const values: any[] = [];
@@ -183,10 +185,10 @@ app.post('/api/bookings', async (req, res) => {
       VALUES ${placeholders}
       RETURNING *;
     `, values);
-    
+
     res.json(result.rows);
   } catch (e: any) {
-    res.status(e.code === 'MISSING_SECRET' || e.code === 'INVALID_SECRET' ? 503 : 500).json({ 
+    res.status(e.code === 'MISSING_SECRET' || e.code === 'INVALID_SECRET' ? 503 : 500).json({
       error: e.message,
       code: e.code || 'INTERNAL_ERROR'
     });
@@ -251,7 +253,7 @@ app.delete('/api/bookings/:groupId', async (req, res) => {
     await db.query('DELETE FROM bookings WHERE group_id = $1', [groupId]);
     res.json({ success: true });
   } catch (e: any) {
-    res.status(e.code === 'MISSING_SECRET' || e.code === 'INVALID_SECRET' ? 503 : 500).json({ 
+    res.status(e.code === 'MISSING_SECRET' || e.code === 'INVALID_SECRET' ? 503 : 500).json({
       error: e.message,
       code: e.code || 'INTERNAL_ERROR'
     });
@@ -263,15 +265,17 @@ app.put('/api/bookings/:groupId/executive', async (req, res) => {
     await ensureDB();
     const { groupId } = req.params;
     const adminPassword = String(req.body?.adminPassword || '');
-    
+
     const userName = req.body?.userName;
     const purpose = req.body?.purpose;
-    
+
     let theme = 'default';
     if (adminPassword === '0419') {
       theme = 'light-blue';
     } else if (adminPassword === '2008') {
       theme = 'gold';
+    } else if (adminPassword === '0001') {
+      theme = 'purple';
     } else if (adminPassword === '2004') {
       theme = 'default';
     } else {
@@ -310,7 +314,7 @@ app.put('/api/bookings/:groupId/executive', async (req, res) => {
 
     res.json({ success: true, bookings: result.rows });
   } catch (e: any) {
-    res.status(500).json({ 
+    res.status(500).json({
       error: e.message,
       code: e.code || 'INTERNAL_ERROR'
     });

@@ -157,6 +157,8 @@ function RoomBookingPage() {
   const getBookingClass = (booking: Booking) => {
     if (booking.theme === 'gold') {
       return 'theme-gold-glowing';
+    } else if (booking.theme === 'purple') {
+      return 'theme-purple-glowing';
     } else if (booking.theme === 'light-blue') {
       return 'theme-light-blue';
     } else if (booking.isExecutive) {
@@ -653,6 +655,7 @@ function RoomBookingPage() {
                         >
                           <div className="relative">
                             {booking.theme === 'gold' && <Crown className="w-3 h-3 absolute -top-1 -right-1 text-yellow-900 animate-bounce" />}
+                            {booking.theme === 'purple' && <Crown className="w-3 h-3 absolute -top-1 -right-1 text-purple-200 animate-bounce" />}
                             <span className="font-bold text-[10px] block leading-tight truncate">{booking.userName}</span>
                             <span className="text-[9px] mt-0.5 block leading-tight truncate opacity-80">{booking.purpose}</span>
                           </div>
@@ -708,6 +711,7 @@ function RoomBookingPage() {
                               <div className={`h-full w-full p-2 flex justify-between items-center ${getBookingClass(booking)}`}>
                                 <div className="flex flex-col relative">
                                   {booking.theme === 'gold' && <Crown className="w-4 h-4 absolute -top-2 -right-6 text-yellow-900 animate-bounce" />}
+                                  {booking.theme === 'purple' && <Crown className="w-4 h-4 absolute -top-2 -right-6 text-purple-200 animate-bounce" />}
                                   <span className="font-bold text-sm">{booking.userName}</span>
                                   <span className="text-xs">{booking.purpose}</span>
                                 </div>

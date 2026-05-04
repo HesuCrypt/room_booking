@@ -33,14 +33,7 @@
   }
 
   .theme-gold-glowing {
-    background: linear-gradient(
-      135deg, 
-      #fef08a 0%, 
-      #eab308 25%, 
-      #fde047 50%, 
-      #eab308 75%, 
-      #ca8a04 100%
-    );
+    background: linear-gradient(135deg, #fef08a 0%, #eab308 25%, #fde047 50%, #eab308 75%, #ca8a04 100%);
     background-size: 200% 200%;
     color: #000;
     border: 3px solid #fff;
@@ -56,68 +49,71 @@
     letter-spacing: 0.05em;
   }
 
-  .theme-gold-glowing::before {
-    content: '';
+  .theme-purple-glowing {
+    background: linear-gradient(135deg, #f3e8ff 0%, #a855f7 25%, #d8b4fe 50%, #a855f7 75%, #6b21a8 100%);
+    background-size: 200% 200%;
+    color: #fff;
+    border: 3px solid #fff;
+    box-shadow: 
+      0 0 25px #a855f7, 
+      0 0 50px rgba(168, 85, 247, 0.6),
+      0 0 75px rgba(168, 85, 247, 0.4),
+      inset 0 0 15px rgba(255, 255, 255, 0.6);
+    animation: purple-pulse 1.5s infinite ease-in-out alternate, gold-shimmer 3s linear infinite;
+    position: relative;
+    overflow: hidden;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.05em;
+  }
+
+  /* Decorative Corner Accents */
+  .theme-gold-glowing::before, .theme-purple-glowing::before {
+    content: '✦';
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image: 
-      radial-gradient(circle at 20% 30%, #fff 1.5px, transparent 1.5px),
-      radial-gradient(circle at 70% 60%, #fff 2px, transparent 2px),
-      radial-gradient(circle at 40% 80%, #fff 1.5px, transparent 1.5px),
-      radial-gradient(circle at 80% 20%, #fff 2px, transparent 2px),
-      radial-gradient(circle at 50% 50%, #fff 1px, transparent 1px);
-    background-size: 100% 100%;
-    animation: gold-sparkle 1.5s linear infinite;
-    opacity: 0.8;
-    pointer-events: none;
-    z-index: 1;
+    top: 2px;
+    left: 2px;
+    font-size: 8px;
+    z-index: 3;
+    text-shadow: 0 0 2px #fff;
   }
+  .theme-gold-glowing::before { color: #ca8a04; }
+  .theme-purple-glowing::before { color: #a855f7; }
 
-  @keyframes gold-sparkle {
-    0%, 100% { opacity: 0.4; transform: scale(0.9); }
-    50% { opacity: 1; transform: scale(1.1); }
-  }
-
-  .theme-gold-glowing::after {
+  /* Luxury Shimmer Overlay */
+  .theme-gold-glowing::after, .theme-purple-glowing::after {
     content: '';
     position: absolute;
     top: -50%;
     left: -50%;
     width: 200%;
     height: 200%;
-    background: linear-gradient(
-      45deg,
-      transparent 40%,
-      rgba(255, 255, 255, 0.8) 50%,
-      transparent 60%
-    );
-    animation: gold-flare 2.5s infinite;
+    background: linear-gradient(45deg,
+        transparent 45%,
+        rgba(255, 255, 255, 0.6) 50%,
+        transparent 55%);
+    animation: gold-flare 3s infinite ease-in-out;
     pointer-events: none;
     z-index: 2;
   }
-  
+
   @keyframes gold-pulse {
     0% { box-shadow: 0 0 25px #eab308, 0 0 50px rgba(234, 179, 8, 0.6), 0 0 75px rgba(234, 179, 8, 0.4); }
     100% { box-shadow: 0 0 45px #fef08a, 0 0 80px rgba(254, 240, 138, 0.8), 0 0 120px rgba(254, 240, 138, 0.5); }
   }
 
-  @keyframes gold-shimmer {
-    0% {
-      background-position: 0% 0%;
-    }
+  @keyframes purple-pulse {
+    0% { box-shadow: 0 0 25px #a855f7, 0 0 50px rgba(168, 85, 247, 0.6), 0 0 75px rgba(168, 85, 247, 0.4); }
+    100% { box-shadow: 0 0 45px #d8b4fe, 0 0 80px rgba(216, 180, 254, 0.8), 0 0 120px rgba(216, 180, 254, 0.5); }
+  }
 
-    100% {
-      background-position: 200% 200%;
-    }
+  @keyframes gold-shimmer {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 200% 200%; }
   }
 
   @keyframes gold-flare {
-    0% {
-      transform: translate(-100%, -100%) rotate(45deg);
-    }
-
-    100% {
-      transform: translate(100%, 100%) rotate(45deg);
-    }
+    0% { transform: translate(-100%, -100%) rotate(45deg); }
+    30% { transform: translate(100%, 100%) rotate(45deg); }
+    100% { transform: translate(100%, 100%) rotate(45deg); }
   }
 }
