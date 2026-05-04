@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2, ChevronDown } from 'lucide-react';
+import { Plus, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2, ChevronDown, Crown, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { NavLink, Navigate, Route, Routes, useParams } from 'react-router-dom';
 
@@ -649,8 +649,17 @@ function RoomBookingPage() {
                       {booking ? (
                         <motion.div
                           layoutId={`booking-${booking.id}`}
-                          className={`absolute inset-1 p-1.5 flex flex-col justify-between group overflow-hidden ${getBookingClass(booking)}`}
+                          className={`absolute inset-0.5 p-1.5 flex flex-col justify-between group overflow-hidden ${getBookingClass(booking)}`}
                         >
+                          {booking.theme === 'gold' && (
+                            <>
+                              <Crown className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 text-black/80 z-20 rotate-12" />
+                              <Sparkles className="absolute bottom-1 right-1 w-2.5 h-2.5 text-black/40 z-20 animate-pulse" />
+                            </>
+                          )}
+                          {booking.theme === 'light-blue' && (
+                            <Sparkles className="absolute top-1 right-1 w-2.5 h-2.5 text-white/60 z-20 animate-pulse" />
+                          )}
                           <div>
                             <span className="font-bold text-[10px] block leading-tight truncate">{booking.userName}</span>
                             <span className="text-[9px] mt-0.5 block leading-tight truncate opacity-80">{booking.purpose}</span>
@@ -704,8 +713,11 @@ function RoomBookingPage() {
                           </div>
                           <div className="flex-1 p-1 bg-white">
                             {booking ? (
-                              <div className={`h-full w-full p-2 flex justify-between items-center ${getBookingClass(booking)}`}>
-                                <div className="flex flex-col">
+                              <div className={`h-full w-full p-2 flex justify-between items-center relative overflow-hidden ${getBookingClass(booking)}`}>
+                                {booking.theme === 'gold' && (
+                                  <Crown className="absolute top-1 right-8 w-3 h-3 text-black/80 z-20" />
+                                )}
+                                <div className="flex flex-col relative z-10">
                                   <span className="font-bold text-sm">{booking.userName}</span>
                                   <span className="text-xs">{booking.purpose}</span>
                                 </div>
