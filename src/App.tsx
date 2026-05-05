@@ -424,6 +424,11 @@ function RoomBookingPage() {
     if (!pendingDeleteBooking) return;
 
     const isAdmin = ADMIN_PASSWORDS.includes(deletePin);
+    if (pendingDeleteBooking.isExecutive && !isAdmin) {
+      setDeletePinError('Executive bookings can only be deleted by an administrator.');
+      return;
+    }
+
     if (!isAdmin && !/^\d{4,6}$/.test(deletePin)) {
       setDeletePinError('Enter your 4–6 digit cancel PIN or the admin passcode.');
       return;
@@ -1135,8 +1140,16 @@ function RoomBookingPage() {
                 <div className="border-l-4 border-black pl-4">
                   <h3 className="font-black uppercase tracking-tight text-xl mb-2">Monthly Recurrence</h3>
                   <p className="text-sm leading-relaxed font-medium">
-                    You can now schedule recurring bookings on a specific day of the month! 
-                    Perfect for monthly townhalls, board meetings, or recurring maintenance.
+                    Schedule recurring bookings on a specific day of the month! 
+                    Perfect for monthly townhalls or recurring board meetings.
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-red-600 pl-4">
+                  <h3 className="font-black uppercase tracking-tight text-xl mb-2 text-red-600">Executive Bookings</h3>
+                  <p className="text-sm leading-relaxed font-medium">
+                    <span className="font-bold">Red color</span> indicates an Executive Booking. 
+                    These are protected slots that can only be booked or deleted by administrators.
                   </p>
                 </div>
 
