@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2, ChevronDown, Crown } from 'lucide-react';
+import { Plus, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2, ChevronDown, Crown, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { NavLink, Navigate, Route, Routes, useParams } from 'react-router-dom';
 
@@ -86,7 +86,8 @@ function RoomBookingPage() {
   const [cancelPin, setCancelPin] = useState('');
   const [isExecutiveBooking, setIsExecutiveBooking] = useState(false);
   const [endTime, setEndTime] = useState('');
-  const [recurrence, setRecurrence] = useState<'none' | 'daily' | 'weekly'>('none');
+  const [recurrence, setRecurrence] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
+  const [monthlyDay, setMonthlyDay] = useState<number>(1);
   const [recurrenceEnd, setRecurrenceEnd] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [currentWeekStart, setCurrentWeekStart] = useState(getStartOfWeek(new Date()));
@@ -99,6 +100,19 @@ function RoomBookingPage() {
   const [pendingDeleteBooking, setPendingDeleteBooking] = useState<Booking | null>(null);
   const [editName, setEditName] = useState('');
   const [editPurpose, setEditPurpose] = useState('');
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+
+  useEffect(() => {
+    const hasSeenUpdate = localStorage.getItem('hasSeenMonthlyUpdate_v1');
+    if (!hasSeenUpdate) {
+      setIsUpdateModalOpen(true);
+    }
+  }, []);
+
+  const closeUpdateModal = () => {
+    localStorage.setItem('hasSeenMonthlyUpdate_v1', 'true');
+    setIsUpdateModalOpen(false);
+  };
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -194,6 +208,7 @@ function RoomBookingPage() {
     setSelectedSlot({ date, time, displayDate });
     setEndTime(time);
     setRecurrence('none');
+    setMonthlyDay(parseInt(date.split('-')[2])); // Default to current selected day
     setRecurrenceEnd('');
     setUserName('');
     setPurpose('');
@@ -231,6 +246,23 @@ function RoomBookingPage() {
     maxDate.setFullYear(maxDate.getFullYear() + 1);
     const actualEndDate = endDate > maxDate ? maxDate : endDate;
 
+    if (recurrence === 'monthly' && monthlyDay) {
+      if (currentDate.getDate() < monthlyDay) {
+        const targetMonth = currentDate.getMonth();
+        currentDate.setDate(monthlyDay);
+        if (currentDate.getMonth() !== targetMonth) {
+          currentDate.setDate(0);
+        }
+      } else if (currentDate.getDate() > monthlyDay) {
+        const targetMonth = (currentDate.getMonth() + 1) % 12;
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        currentDate.setDate(monthlyDay);
+        if (currentDate.getMonth() !== targetMonth) {
+          currentDate.setDate(0);
+        }
+      }
+    }
+
     while (currentDate <= actualEndDate) {
       const dayOfWeek = currentDate.getDay();
       // Skip weekends for daily
@@ -249,6 +281,15 @@ function RoomBookingPage() {
         currentDate.setDate(currentDate.getDate() + 1);
       } else if (recurrence === 'weekly') {
         currentDate.setDate(currentDate.getDate() + 7);
+      } else if (recurrence === 'monthly') {
+        const targetMonth = (currentDate.getMonth() + 1) % 12;
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        currentDate.setDate(monthlyDay);
+        // If we rolled over past the target month (e.g. Feb 31 -> March 3), 
+        // cap it to the last day of the target month.
+        if (currentDate.getMonth() !== targetMonth) {
+          currentDate.setDate(0);
+        }
       }
     }
     return slots;
@@ -473,7 +514,16 @@ function RoomBookingPage() {
           <h1 className="text-xl font-bold uppercase tracking-tighter">Room Booking</h1>
           {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
         </div>
-        <div className="text-xs font-mono uppercase border border-black px-2 py-1">Internal</div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsUpdateModalOpen(true)}
+            className="text-[10px] font-bold uppercase tracking-widest border border-black px-2 py-1 hover:bg-black hover:text-white transition-colors flex items-center gap-1"
+          >
+            <Sparkles className="w-3 h-3 text-red-500" />
+            <span>What's New</span>
+          </button>
+          <div className="text-xs font-mono uppercase border border-black px-2 py-1">Internal</div>
+        </div>
       </header>
 
       {dbError && (
@@ -800,8 +850,27 @@ function RoomBookingPage() {
                     <option value="none">Does not repeat</option>
                     <option value="daily">Daily (Mon-Fri)</option>
                     <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
                   </select>
                 </div>
+
+                {recurrence === 'monthly' && (
+                  <div className="flex justify-between border-b border-black pb-2 items-center">
+                    <span className="uppercase text-xs">Day of the Month</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={monthlyDay}
+                      onChange={e => {
+                        const val = Math.min(31, Math.max(1, parseInt(e.target.value) || 1));
+                        setMonthlyDay(val);
+                        setError(null);
+                      }}
+                      className="w-20 border border-black p-1 outline-none focus:ring-1 focus:ring-black bg-white text-black font-bold text-center"
+                    />
+                  </div>
+                )}
 
                 {recurrence !== 'none' && (
                   <div className="flex justify-between border-b border-black pb-2 items-center">
@@ -1036,6 +1105,66 @@ function RoomBookingPage() {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+        {isUpdateModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white border-4 border-black w-full max-w-lg p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] relative"
+            >
+              <div className="flex items-center gap-4 mb-6 border-b-4 border-black pb-4">
+                <div className="bg-black text-white p-3">
+                  <Sparkles className="w-8 h-8" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">New Update</h2>
+                  <p className="text-xs font-bold uppercase tracking-widest mt-1 opacity-60 text-red-600">Version 2.1.0 Released</p>
+                </div>
+              </div>
+
+              <div className="space-y-6 mb-8">
+                <div className="border-l-4 border-black pl-4">
+                  <h3 className="font-black uppercase tracking-tight text-xl mb-2">Monthly Recurrence</h3>
+                  <p className="text-sm leading-relaxed font-medium">
+                    You can now schedule recurring bookings on a specific day of the month! 
+                    Perfect for monthly townhalls, board meetings, or recurring maintenance.
+                  </p>
+                </div>
+
+                <div className="bg-gray-100 p-4 border-2 border-black">
+                  <h4 className="font-bold uppercase text-xs mb-2 tracking-widest">How to use:</h4>
+                  <ul className="text-xs space-y-2 font-bold uppercase tracking-wide">
+                    <li className="flex gap-2">
+                      <span className="bg-black text-white px-1.5 h-fit">1</span>
+                      <span>Click any available slot</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="bg-black text-white px-1.5 h-fit">2</span>
+                      <span>Select "Monthly" from the Repeat menu</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="bg-black text-white px-1.5 h-fit">3</span>
+                      <span>Enter the day of the month (1-31)</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <button
+                onClick={closeUpdateModal}
+                className="w-full bg-black text-white font-black uppercase tracking-[0.2em] p-5 hover:bg-red-600 transition-colors border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] active:shadow-none active:translate-x-1 active:translate-y-1"
+              >
+                Got it, let's book!
+              </button>
             </motion.div>
           </motion.div>
         )}
