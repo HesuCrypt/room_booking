@@ -1126,6 +1126,15 @@ function RoomBookingPage() {
               exit={{ scale: 0.9, y: 20 }}
               className="bg-white border-4 border-black w-full max-w-lg p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] relative"
             >
+              {/* Temporary Close */}
+              <button
+                onClick={() => setIsUpdateModalOpen(false)}
+                className="absolute top-4 right-4 p-2 bg-white text-black hover:bg-black hover:text-white border-2 border-black transition-colors"
+                title="Close for now"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
               <div className="flex items-center gap-4 mb-6 border-b-4 border-black pb-4">
                 <div className="bg-black text-white p-3">
                   <Sparkles className="w-8 h-8" />
@@ -1176,7 +1185,7 @@ function RoomBookingPage() {
                 onClick={closeUpdateModal}
                 className="w-full bg-black text-white font-black uppercase tracking-[0.2em] p-5 hover:bg-red-600 transition-colors border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] active:shadow-none active:translate-x-1 active:translate-y-1"
               >
-                Got it, let's book!
+                Don't show this again
               </button>
             </motion.div>
           </motion.div>
