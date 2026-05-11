@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2, ChevronDown, Crown, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { NavLink, Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 
 type RoomConfig = {
   slug: string;
@@ -65,11 +66,14 @@ const formatTimeToSlot = (d: Date) => {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to={`/room/${DEFAULT_ROOM_SLUG}`} replace />} />
-      <Route path="/room/:roomSlug" element={<RoomBookingPage />} />
-      <Route path="*" element={<Navigate to={`/room/${DEFAULT_ROOM_SLUG}`} replace />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<Navigate to={`/room/${DEFAULT_ROOM_SLUG}`} replace />} />
+        <Route path="/room/:roomSlug" element={<RoomBookingPage />} />
+        <Route path="*" element={<Navigate to={`/room/${DEFAULT_ROOM_SLUG}`} replace />} />
+      </Routes>
+      <Analytics />
+    </>
   );
 }
 
