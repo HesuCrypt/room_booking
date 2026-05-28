@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2, ChevronDown, Crown, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { NavLink, Navigate, Route, Routes, useParams } from 'react-router-dom';
@@ -63,13 +63,60 @@ const formatTimeToSlot = (d: Date) => {
   return `${String(hour12).padStart(2, '0')}:00 ${ampm}`;
 };
 
+function SystemDownNotification() {
+  return (
+    <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center p-6">
+      <div className="max-w-2xl w-full bg-white border-4 border-white p-8 md:p-12 text-center shadow-2xl">
+        <div className="mb-6">
+          <div className="w-20 h-20 mx-auto bg-red-500 rounded-full flex items-center justify-center mb-4">
+            <X className="w-10 h-10 text-white" />
+          </div>
+        </div>
+        
+        <h1 className="text-3xl md:text-4xl font-bold uppercase tracking-tighter mb-4 text-black">
+          System Down
+        </h1>
+        
+        <div className="space-y-4 text-lg md:text-xl">
+          <p className="font-medium">
+            We are now switching to a new room booking system.
+          </p>
+          <p className="text-gray-600">
+            This website will be unavailable during the transition.
+          </p>
+        </div>
+        
+        <div className="mt-8">
+          <a
+            href="https://www.canva.com/design/DAHJ_zwNggY/su2gzrSCx8rjpybES00cCg/edit"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block bg-black text-white px-6 py-3 font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors"
+          >
+            View Announcement
+          </a>
+        </div>
+        
+        <div className="mt-8 pt-6 border-t-2 border-gray-200">
+          <p className="text-sm uppercase tracking-widest text-gray-500">
+            Please check back later for updates
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to={`/room/${DEFAULT_ROOM_SLUG}`} replace />} />
-      <Route path="/room/:roomSlug" element={<RoomBookingPage />} />
-      <Route path="*" element={<Navigate to={`/room/${DEFAULT_ROOM_SLUG}`} replace />} />
-    </Routes>
+    <>
+      <SystemDownNotification />
+      <Routes>
+        <Route path="/" element={<Navigate to={`/room/${DEFAULT_ROOM_SLUG}`} replace />} />
+        <Route path="/room/:roomSlug" element={<RoomBookingPage />} />
+        <Route path="*" element={<Navigate to={`/room/${DEFAULT_ROOM_SLUG}`} replace />} />
+      </Routes>
+    </>
   );
 }
 
@@ -934,12 +981,27 @@ function RoomBookingPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-bold uppercase mb-2">Purpose</label>
-                  <input
+                  <textarea
                     required
-                    type="text"
+                    rows={3}
                     value={purpose}
-                    onChange={e => setPurpose(e.target.value)}
-                    className="w-full border border-black p-3 outline-none focus:ring-1 focus:ring-black min-h-[44px] bg-white text-black"
+                    onChange={e => {
+                      setPurpose(e.target.value);
+                      const el = e.target as HTMLTextAreaElement;
+                      el.style.height = 'auto';
+                      el.style.height = el.scrollHeight + 'px';
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        // Allow natural newline; prevent form submit
+                        e.stopPropagation();
+                      }
+                    }}
+                    ref={el => {
+                      if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+                    }}
+                    className="w-full border border-black p-3 outline-none focus:ring-1 focus:ring-black bg-white text-black resize-none overflow-hidden leading-relaxed"
+                    style={{ minHeight: '80px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
                     placeholder="MEETING PURPOSE"
                   />
                 </div>
@@ -1021,10 +1083,20 @@ function RoomBookingPage() {
                   </div>
                   <div>
                     <label className="block uppercase opacity-60 mb-1">Purpose</label>
-                    <input
+                    <textarea
+                      rows={3}
                       value={editPurpose}
-                      onChange={e => setEditPurpose(e.target.value)}
-                      className="w-full border border-black p-2 outline-none focus:ring-1 focus:ring-black bg-white text-black font-bold"
+                      onChange={e => {
+                        setEditPurpose(e.target.value);
+                        const el = e.target as HTMLTextAreaElement;
+                        el.style.height = 'auto';
+                        el.style.height = el.scrollHeight + 'px';
+                      }}
+                      ref={el => {
+                        if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+                      }}
+                      className="w-full border border-black p-2 outline-none focus:ring-1 focus:ring-black bg-white text-black font-bold resize-none overflow-hidden leading-relaxed"
+                      style={{ minHeight: '80px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
                     />
                   </div>
                   <div className="flex justify-between mt-2 pt-2 border-t border-black">
